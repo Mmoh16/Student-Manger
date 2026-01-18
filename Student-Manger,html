@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Data Dashboard</title>
+
+    <!-- === ONESIGNAL NOTIFICATIONS === -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "b58e7b17-b719-486a-9d7b-5cb98d8533c3",
+          path: "/Student-Manger/", // Critical for GitHub Pages
+        });
+      });
+    </script>
+
+    <!-- === UPDATED CLERK SCRIPT (Matches Index) === -->
+    <script
+        async
+        crossorigin="anonymous"
+        data-clerk-publishable-key="pk_test_ZXhjaXRpbmctbWFzdGlmZi04MC5jbGVyay5hY2NvdW50cy5kZXYk"
+        src="https://exciting-mastiff-80.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
+        type="text/javascript">
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        :root {
+            --primary-color: #0F9E99;
+            --primary-hover: #0b7a76;
+            --bg-color: #EFE9E0;
+            --card-bg: #FFFFFF;
+            --text-color: #333333;
+            --accent-green: #25D366;
+            --error-red: #d32f2f;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-color);
+        }
+
+        .card-shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); }
+        
+        /* Skeleton Loading Animation */
+        .skeleton {
+            background-color: #e5e7eb;
+            animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+
+        /* Toast Notifications */
+        .toast-enter { transform: translateX(100%); opacity: 0; }
+        .toast-enter-active { transform: translateX(0); opacity: 1; transition: all 300ms ease-out; }
+        .toast-exit { transform: translateX(0); opacity: 1; }
+        .toast-exit-active { transform: translateX(100%); opacity: 0; transition: all 300ms ease-in; }
+
+        /* Custom Utility Classes for Dynamic Colors */
+        .bg-primary { background-color: var(--primary-color); }
+        .bg-primary-hover:hover { background-color: var(--primary-hover); }
+        .text-primary { color: var(--primary-color); }
+        .border-primary { border-color: var(--primary-color); }
+        .focus-ring-primary:focus { --tw-ring-color: var(--primary-color); }
+        
+        .text-error { color: var(--error-red); }
+        .border-error { border-color: var(--error-red); }
+        
+        .text-accent { color: var(--accent-green); }
+
+        /* Modal Animation */
+        .modal { transition: opacity 0.25s ease; }
+        .modal-active { overflow-x: hidden; overflow-y: visible !important; }
+    </style>
+</head>
+<!--<body style="display: none;"> -->
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-3 pointer-events-none w-full max-w-sm px-4 sm:px-0"></div>
+
+    <!-- Header -->
+    <header class="bg-[var(--primary-color)] text-white p-4 shadow-md sticky top-0 z-10">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold"><i class="fas fa-user-graduate mr-2"></i>Student Tracker</h1>
+            <div class="flex gap-2 items-center">
+                <!-- Notification Button (UPDATED) -->
+                <button onclick="requestNotificationPermission()" id="notifyBtn" class="bg-white/20 text-white px-3 py-2 rounded-full font-bold text-sm hover:bg-white/30 transition backdrop-blur-sm" title="Enable Notifications">
+                    <i class="fas fa-bell"></i>
+                </button>
+                <!-- View Toggle Button -->
+                <button onclick="toggleViewMode()" id="viewToggleBtn" class="bg-white/20 text-white px-3 py-2 rounded-full font-bold text-sm hover:bg-white/30 transition backdrop-blur-sm" title="Toggle View">
+                    <i class="fas fa-list"></i>
+                </button>
+                <button onclick="fetchStudents(true)" class="bg-white/20 text-white px-3 py-2 rounded-full font-bold text-sm hover:bg-white/30 transition backdrop-blur-sm" title="Refresh">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button onclick="openAddModal()" class="bg-white text-[var(--primary-color)] px-4 py-2 rounded-full font-bold text-sm hover:bg-gray-100 transition shadow-sm">
+                    + Add New
+                </button>
+                
+                <!-- MAIN MENU CONTAINER -->
+                <div id="main-menu-container"></div>
+            
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto p-4 max-w-7xl">
+        
+        <!-- Controls Section -->
+        <div class="bg-[var(--card-bg)] p-4 rounded-xl card-shadow mb-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                
+                <!-- Search -->
+                <div class="relative group">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" id="searchInput" placeholder="Search..." 
+                        class="w-full pl-10 pr-10 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent transition bg-gray-50">
+                    <button id="searchInputClear" onclick="clearInput('searchInput')" class="hidden absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-[var(--error-red)] transition">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                </div>
+
+                <!-- Payment Filter -->
+                <div class="relative group">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </span>
+                    <select id="filterInput" class="w-full pl-10 pr-10 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent bg-gray-50 appearance-none cursor-pointer">
+                        <option value="all">All Payments</option>
+                        <option value="fully_paid">Fully Paid</option>
+                        <option value="has_remaining">Unpaid</option>
+                    </select>
+                     <button id="filterInputClear" onclick="clearInput('filterInput', 'all')" class="hidden absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-[var(--error-red)] transition bg-transparent z-10">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                </div>
+
+                <!-- Date Filter -->
+                <div class="relative group">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                        <i class="fas fa-calendar-day"></i>
+                    </span>
+                    <select id="dateFilterInput" class="w-full pl-10 pr-10 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent bg-gray-50 appearance-none cursor-pointer">
+                        <option value="all">All Dates</option>
+                        <option value="today">Joined Today</option>
+                        <option value="yesterday">Joined Yesterday</option>
+                        <option value="this_week">This Week</option>
+                        <option value="this_month">This Month</option>
+                    </select>
+                    <button id="dateFilterInputClear" onclick="clearInput('dateFilterInput', 'all')" class="hidden absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-[var(--error-red)] transition bg-transparent z-10">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                </div>
+
+                <!-- Website Filter -->
+                <div class="relative group">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                        <i class="fas fa-globe"></i>
+                    </span>
+                    <select id="websiteFilterInput" class="w-full pl-10 pr-10 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent bg-gray-50 appearance-none cursor-pointer">
+                        <option value="all">All Websites</option>
+                        <option value="empty">Missing Website</option>
+                        <option value="check">Needs Check</option>
+                    </select>
+                    <button id="websiteFilterInputClear" onclick="clearInput('websiteFilterInput', 'all')" class="hidden absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-[var(--error-red)] transition bg-transparent z-10">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                </div>
+
+                <!-- Sort -->
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                        <i class="fas fa-sort"></i>
+                    </span>
+                    <select id="sortInput" class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent bg-gray-50 appearance-none cursor-pointer">
+                        <option value="name_asc">Name (A-Z)</option>
+                        <option value="date_desc">Newest First</option>
+                        <option value="remaining_desc">Highest Debt</option>
+                        <option value="paid_desc">Most Paid</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Summary -->
+        <div class="flex justify-between items-center mb-4 px-2">
+            <p class="text-gray-500 text-sm">Showing <span id="countDisplay" class="font-bold text-[var(--text-color)]">0</span> students</p>
+            <p class="text-gray-500 text-sm">Total Debt: <span id="totalDebtDisplay" class="font-bold text-[var(--error-red)]">$0</span></p>
+        </div>
+
+        <!-- Grid Display -->
+        <div id="studentGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Cards will be injected here via JS -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-12">
+            <div class="text-gray-300 text-6xl mb-4"><i class="fas fa-folder-open"></i></div>
+            <p class="text-gray-500 text-lg">No students found matching your criteria.</p>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="addModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-[var(--card-bg)] rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div class="bg-[var(--primary-color)] p-4 flex justify-between items-center text-white">
+                <h3 id="modalTitle" class="font-bold">Add Student to Notion</h3>
+                <button onclick="document.getElementById('addModal').classList.add('hidden')" class="hover:text-gray-200 transition"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="addForm" class="p-4 space-y-3">
+                <input type="hidden" id="studentId">
+                <input type="text" id="newName" placeholder="Full Name" required class="w-full border border-gray-200 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]">
+                <input type="email" id="newEmail" placeholder="Email" class="w-full border border-gray-200 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]">
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="tel" id="newStudentPhone" placeholder="Student Phone" required class="w-full border border-gray-200 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]">
+                    <input type="tel" id="newParentPhone" placeholder="Parent Phone" required class="w-full border border-gray-200 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="number" id="newPaid" placeholder="Paid Amount ($)" required class="w-full border border-gray-200 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]">
+                    <input type="number" id="newRemaining" placeholder="Remaining ($)" required class="w-full border border-gray-200 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]">
+                </div>
+                
+                <!-- Buttons Container -->
+                <div class="flex gap-2 mt-4">
+                    <button type="button" id="deleteBtn" onclick="deleteStudent()" class="hidden px-4 bg-red-100 text-red-600 border border-red-200 py-2 rounded font-bold hover:bg-red-200 transition shadow-sm whitespace-nowrap">
+                        <i class="fas fa-trash-alt mr-1"></i> Delete
+                    </button>
+                    <button type="button" id="removeBtn" onclick="removeStudent()" class="hidden px-4 bg-orange-100 text-orange-600 border border-orange-200 py-2 rounded font-bold hover:bg-orange-200 transition shadow-sm whitespace-nowrap">
+                        <i class="fas fa-user-minus mr-1"></i> Remove
+                    </button>
+                    <button type="submit" id="submitBtn" class="flex-1 bg-[var(--primary-color)] text-white py-2 rounded font-bold hover:bg-[var(--primary-hover)] transition shadow-md">
+                        Save Student
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Image Popup Modal -->
+    <div id="imageModal" class="modal opacity-0 pointer-events-none fixed inset-0 flex items-center justify-center z-50">
+        <div class="modal-overlay absolute inset-0 bg-gray-900 opacity-50"></div>
+        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-xl shadow-2xl z-50 overflow-y-auto transform scale-95 transition-transform duration-300">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100">
+                <h3 class="font-bold text-lg text-gray-800">Student Details</h3>
+                <div class="cursor-pointer z-50" onclick="closeModal()">
+                    <i class="fa-solid fa-xmark text-gray-500 hover:text-gray-700 text-xl"></i>
+                </div>
+            </div>
+            <!-- Modal Body -->
+            <div class="px-6 py-6 text-center">
+                <div class="mb-2 text-sm text-gray-500 uppercase tracking-wider font-semibold">Student ID</div>
+                <div id="modalStudentId" class="text-2xl font-bold text-[var(--primary-color)] mb-6 font-mono bg-gray-50 inline-block px-4 py-1 rounded-lg">--</div>
+                
+                <div class="relative w-full aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-inner flex items-center justify-center">
+                    <img id="modalImage" src="" alt="Student" class="object-cover w-full h-full hidden" referrerpolicy="no-referrer">
+                    <div id="modalImagePlaceholder" class="text-gray-400 flex flex-col items-center">
+                        <i class="fa-regular fa-image text-4xl mb-2"></i>
+                        <span class="text-sm">No image available</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Modal Footer -->
+            <div class="bg-gray-50 px-6 py-4 flex justify-end">
+                <button onclick="closeModal()" class="bg-[var(--primary-color)] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[var(--primary-hover)] transition shadow-sm">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link to your local navbar.js file -->
+    <script src="navbar.js"></script>
+
+    <script>
+        // ==========================================
+        // CONFIGURATION
+        // ==========================================
+        const GET_WEBHOOK_URL = 'https://api.mark-attendance.com/webhook/Student-Manger-get'; 
+        const POST_WEBHOOK_URL = 'https://api.mark-attendance.com/webhook/Student-Manger-post'; 
+        const DELETE_WEBHOOK_URL = 'https://api.mark-attendance.com/webhook/Student-Manger-delete';
+        const REMOVE_WEBHOOK_URL = 'https://api.mark-attendance.com/webhook/Student-Manger-remove';
+        const SAVE_NOTE_WEBHOOK_URL = 'https://api.mark-attendance.com/webhook/Student-Manger-post';
+        const DEFAULT_IMAGE_URL = 'https://drive.google.com/file/d/1XHdWjv1CwvYno0nqSH9LaGdtVomp5dKL/view?usp=drivesdk';
+        
+        // Cache Keys
+        const CACHE_KEY = 'student_dashboard_data';
+        const VIEW_MODE_KEY = 'student_dashboard_view';
+        // ==========================================
+
+        let students = []; 
+        let viewMode = localStorage.getItem(VIEW_MODE_KEY) || 'grid'; 
+        let originalStudentData = {}; // Store original data for comparison
+
+        // DOM Elements
+        const grid = document.getElementById('studentGrid');
+        const searchInput = document.getElementById('searchInput');
+        const filterInput = document.getElementById('filterInput');
+        const dateFilterInput = document.getElementById('dateFilterInput');
+        const websiteFilterInput = document.getElementById('websiteFilterInput');
+        const sortInput = document.getElementById('sortInput');
+        const countDisplay = document.getElementById('countDisplay');
+        const totalDebtDisplay = document.getElementById('totalDebtDisplay');
+        const emptyState = document.getElementById('emptyState');
+        const addForm = document.getElementById('addForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const deleteBtn = document.getElementById('deleteBtn');
+        const removeBtn = document.getElementById('removeBtn');
+        const modalTitle = document.getElementById('modalTitle');
+        const viewToggleBtn = document.getElementById('viewToggleBtn');
+        const notifyBtn = document.getElementById('notifyBtn');
+
+        // Initial Load
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("App initialized");
+            // Check notifications status to style button
+            window.OneSignalDeferred.push(async function(OneSignal) {
+                const permission = await OneSignal.Notifications.permission;
+                if (permission) {
+                     updateNotifyIcon(true);
+                }
+            });
+
+            const cachedData = localStorage.getItem(CACHE_KEY);
+            if (cachedData) {
+                console.log("Loading from cache");
+                students = JSON.parse(cachedData);
+                renderStudents();
+                showToast("Loaded from cache", "info");
+            }
+            updateViewToggleIcon();
+            fetchStudents(false);
+        });
+
+        searchInput.addEventListener('input', renderStudents);
+        filterInput.addEventListener('change', renderStudents);
+        dateFilterInput.addEventListener('change', renderStudents);
+        websiteFilterInput.addEventListener('change', renderStudents);
+        sortInput.addEventListener('change', renderStudents);
+
+        // --- UPDATED NOTIFICATION FUNCTION ---
+        function requestNotificationPermission() {
+            // Use OneSignal's Slidedown prompt
+            window.OneSignalDeferred.push(async function(OneSignal) {
+                await OneSignal.Slidedown.promptPush();
+            });
+        }
+        
+        // Function to update icon style if granted
+        function updateNotifyIcon(granted) {
+            const icon = notifyBtn.querySelector('i');
+            if (granted) {
+                icon.classList.remove('fa-bell');
+                icon.classList.add('fa-bell-slash');
+                notifyBtn.classList.add('bg-[var(--primary-color)]');
+                notifyBtn.classList.remove('bg-white/20');
+                notifyBtn.title = "Notifications Enabled";
+            }
+        }
+
+        // --- VIEW FUNCTIONS ---
+        function toggleViewMode() {
+            viewMode = viewMode === 'grid' ? 'list' : 'grid';
+            localStorage.setItem(VIEW_MODE_KEY, viewMode);
+            updateViewToggleIcon();
+            renderStudents();
+        }
+
+        function updateViewToggleIcon() {
+            const icon = viewToggleBtn.querySelector('i');
+            if (viewMode === 'grid') {
+                icon.className = 'fas fa-list';
+                viewToggleBtn.title = "Switch to List View";
+            } else {
+                icon.className = 'fas fa-th-large';
+                viewToggleBtn.title = "Switch to Grid View";
+            }
+        }
+
+        // --- API FUNCTIONS ---
+
+        async function fetchStudents(forceRefresh = false) {
+            console.log("Fetching students from:", GET_WEBHOOK_URL);
+            
+            if (students.length === 0 || forceRefresh) {
+                renderSkeleton();
+                emptyState.classList.add('hidden');
+            }
+
+            try {
+                const response = await fetch(GET_WEBHOOK_URL);
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const rawData = await response.json();
+                console.log("Data received:", rawData);
+
+                let rawList = [];
+                if (Array.isArray(rawData)) {
+                    rawList = rawData;
+                } else if (rawData.data && Array.isArray(rawData.data)) {
+                    rawList = rawData.data;
+                } else if (rawData.body && Array.isArray(rawData.body)) {
+                    rawList = rawData.body;
+                }
+
+                students = rawList.map((item, index) => {
+                    let joinedDate = null;
+                    try {
+                        const rawDate = item["date"];
+                        if (rawDate) {
+                            if (typeof rawDate === 'string' && rawDate.trim().startsWith('{')) {
+                                const parsed = JSON.parse(rawDate);
+                                joinedDate = parsed.start; 
+                            } else if (typeof rawDate === 'object') {
+                                joinedDate = rawDate.start || rawDate;
+                            } else {
+                                joinedDate = rawDate;
+                            }
+                        }
+                    } catch (e) { console.warn("Date parse error", e); }
+
+                    let rawImg = item["image"] || item["Image"];
+                    let finalImg = "";
+                    if (Array.isArray(rawImg) && rawImg.length > 0) {
+                        finalImg = rawImg[0].url || rawImg[0].file?.url || rawImg[0].external?.url || "";
+                    } else if (typeof rawImg === 'string') {
+                        finalImg = rawImg;
+                    }
+                    if (!finalImg) finalImg = DEFAULT_IMAGE_URL;
+
+                    return {
+                        id: item["id"] || item["ID"] || index, 
+                        name: item["Name"] || "No Name",
+                        email: item["Email"] || "",
+                        studentPhone: item["Student Phone"] || "",
+                        parentPhone: item["Parent Phone"] || "",
+                        paid: parseFloat(item["Paid"]) || 0,
+                        remaining: parseFloat(item["Remaining"]) || 0,
+                        notes: item["Notes"] || item["notes"] || "",
+                        website: item["Website"] || item["website"] || "", 
+                        joinedDate: joinedDate,
+                        imageUrl: finalImg
+                    };
+                });
+                
+                localStorage.setItem(CACHE_KEY, JSON.stringify(students));
+                renderStudents();
+                if(forceRefresh) showToast("Data updated successfully", "success");
+
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                showToast("Failed to load data", "error");
+                
+                if(students.length === 0) {
+                    grid.innerHTML = `
+                        <div class="col-span-full text-center p-8 bg-red-50 rounded-xl border border-red-200">
+                            <i class="fas fa-exclamation-circle text-4xl text-[var(--error-red)] mb-3"></i>
+                            <h3 class="text-lg font-bold text-[var(--error-red)]">Error loading data</h3>
+                            <p class="text-sm text-gray-600 mb-4">${error.message}</p>
+                            <button onclick="fetchStudents(true)" class="px-4 py-2 bg-[var(--primary-color)] text-white rounded-lg hover:bg-[var(--primary-hover)]">
+                                Try Again
+                            </button>
+                        </div>`;
+                }
+            }
+        }
+
+        // ... existing functions (renderSkeleton, saveNote, deleteStudent, removeStudent) ...
+        function renderSkeleton() {
+            grid.innerHTML = '';
+            const count = 6; 
+            const skeletonClass = viewMode === 'list' ? 'col-span-full' : '';
+            
+            if (viewMode === 'list') {
+                grid.className = 'grid grid-cols-1 gap-3';
+            } else {
+                grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
+            }
+
+            for(let i=0; i<count; i++) {
+                grid.innerHTML += `
+                    <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100 ${skeletonClass}">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="w-2/3">
+                                <div class="h-6 w-3/4 skeleton rounded mb-2"></div>
+                                <div class="h-4 w-1/2 skeleton rounded"></div>
+                            </div>
+                            <div class="h-6 w-16 skeleton rounded"></div>
+                        </div>
+                        <div class="h-10 w-full skeleton rounded mb-4"></div>
+                        <div class="flex justify-between mt-4">
+                            <div class="h-4 w-1/3 skeleton rounded"></div>
+                            <div class="h-4 w-1/3 skeleton rounded"></div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function saveNote(studentId, index) {
+            const input = document.getElementById(`note-input-${index}`);
+            const btn = document.getElementById(`note-btn-${index}`);
+            const newNote = input.value;
+            
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+
+            try {
+                await fetch(SAVE_NOTE_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: studentId, "Notes": newNote })
+                });
+                
+                btn.innerHTML = '<i class="fas fa-check"></i>';
+                btn.classList.add('bg-green-100', 'text-green-600', 'border-green-200');
+                students[index].notes = newNote;
+                localStorage.setItem(CACHE_KEY, JSON.stringify(students));
+                
+                showToast("Note saved", "success");
+
+                setTimeout(() => { 
+                    btn.innerHTML = 'Save'; 
+                    btn.classList.remove('bg-green-100', 'text-green-600', 'border-green-200');
+                    btn.disabled = false; 
+                }, 2000);
+            } catch(e) {
+                showToast("Error saving note", "error");
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function deleteStudent() {
+            const id = document.getElementById('studentId').value;
+            if (!id) return;
+            if (!confirm("Are you sure you want to PERMANENTLY delete this student?")) return;
+
+            const originalText = deleteBtn.innerHTML;
+            deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Deleting...';
+            deleteBtn.disabled = true;
+            removeBtn.disabled = true;
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(DELETE_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id })
+                });
+                if (!response.ok) throw new Error('Failed to delete');
+                
+                showToast("Student deleted permanently", "success");
+                
+                await fetchStudents(true);
+                document.getElementById('addModal').classList.add('hidden');
+            } catch (error) {
+                showToast("Error deleting student", "error");
+            } finally {
+                deleteBtn.innerHTML = originalText;
+                deleteBtn.disabled = false;
+                removeBtn.disabled = false;
+                submitBtn.disabled = false;
+            }
+        }
+
+        async function removeStudent() {
+            const id = document.getElementById('studentId').value;
+            if (!id) return;
+            if (!confirm("Are you sure you want to remove this student?")) return;
+
+            const originalText = removeBtn.innerHTML;
+            removeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Removing...';
+            removeBtn.disabled = true;
+            deleteBtn.disabled = true;
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(REMOVE_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id })
+                });
+                if (!response.ok) throw new Error('Failed to remove');
+                
+                showToast("Student removed", "success");
+
+                await fetchStudents(true);
+                document.getElementById('addModal').classList.add('hidden');
+            } catch (error) {
+                showToast("Error removing student", "error");
+            } finally {
+                removeBtn.innerHTML = originalText;
+                removeBtn.disabled = false;
+                deleteBtn.disabled = false;
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Add/Edit Form Handler - UPDATED WITH VISUAL FEEDBACK & EDITED FIELDS
+        addForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const originalBtnText = submitBtn.innerText;
+            
+            // Visual Loading State
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+            submitBtn.disabled = true;
+            deleteBtn.disabled = true;
+            removeBtn.disabled = true;
+
+            const newStudent = {
+                "id": document.getElementById('studentId').value,
+                "Name": document.getElementById('newName').value,
+                "Email": document.getElementById('newEmail').value,
+                "Student Phone": document.getElementById('newStudentPhone').value,
+                "Parent Phone": document.getElementById('newParentPhone').value,
+                "Paid": parseFloat(document.getElementById('newPaid').value) || 0,
+                "Remaining": parseFloat(document.getElementById('newRemaining').value) || 0
+            };
+
+            // Calculate Edited Fields
+            const editedFields = [];
+            const isEdit = newStudent.id !== '';
+            
+            if (isEdit && originalStudentData && Object.keys(originalStudentData).length > 0) {
+                if (newStudent.Name !== originalStudentData.name) editedFields.push("Name");
+                if (newStudent.Email !== originalStudentData.email) editedFields.push("Email");
+                if (newStudent["Student Phone"] !== originalStudentData.studentPhone) editedFields.push("Student Phone");
+                if (newStudent["Parent Phone"] !== originalStudentData.parentPhone) editedFields.push("Parent Phone");
+                if (newStudent.Paid !== originalStudentData.paid) editedFields.push("Paid");
+                if (newStudent.Remaining !== originalStudentData.remaining) editedFields.push("Remaining");
+            }
+            
+            // Add edited fields metadata to payload
+            newStudent.edited_fields = editedFields;
+
+            try {
+                const response = await fetch(POST_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newStudent)
+                });
+                
+                if (!response.ok) throw new Error('Failed to save');
+                
+                // Success Visual State
+                submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Saved';
+                submitBtn.classList.remove('bg-[var(--primary-color)]');
+                submitBtn.classList.add('bg-green-600');
+                
+                // Update local data and cache immediately for responsiveness
+                await fetchStudents(true); 
+                
+                // Wait 1 second before closing to show success
+                setTimeout(() => {
+                    document.getElementById('addModal').classList.add('hidden');
+                    addForm.reset();
+                    
+                    // Reset Button
+                    submitBtn.innerText = "Save Student"; // Reset text
+                    submitBtn.classList.remove('bg-green-600');
+                    submitBtn.classList.add('bg-[var(--primary-color)]');
+                    submitBtn.disabled = false;
+                    deleteBtn.disabled = false;
+                    removeBtn.disabled = false;
+                }, 1000);
+
+            } catch (error) {
+                showToast("Error saving data", "error");
+                // Reset Button on Error
+                submitBtn.innerText = originalBtnText;
+                submitBtn.disabled = false;
+                deleteBtn.disabled = false;
+                removeBtn.disabled = false;
+            }
+        });
+
+        // --- UI FUNCTIONS ---
+        function openAddModal() {
+            addForm.reset();
+            document.getElementById('studentId').value = ''; 
+            originalStudentData = {}; // Clear original data
+            modalTitle.innerText = "Add Student to Notion";
+            submitBtn.innerText = "Save Student";
+            deleteBtn.classList.add('hidden');
+            removeBtn.classList.add('hidden');
+            document.getElementById('addModal').classList.remove('hidden');
+        }
+
+        function openEditModal(index) {
+            const student = students[index];
+            if(!student) return;
+            
+            // Store original data for comparison
+            originalStudentData = { ...student };
+
+            document.getElementById('studentId').value = student.id;
+            document.getElementById('newName').value = student.name;
+            document.getElementById('newEmail').value = student.email;
+            document.getElementById('newStudentPhone').value = student.studentPhone;
+            document.getElementById('newParentPhone').value = student.parentPhone;
+            document.getElementById('newPaid').value = student.paid;
+            document.getElementById('newRemaining').value = student.remaining;
+            
+            modalTitle.innerText = "Edit Student";
+            submitBtn.innerText = "Update Student";
+            deleteBtn.classList.remove('hidden');
+            removeBtn.classList.remove('hidden');
+            document.getElementById('addModal').classList.remove('hidden');
+        }
+
+        function clearInput(targetId, defaultVal = '') {
+            document.getElementById(targetId).value = defaultVal;
+            renderStudents();
+        }
+
+        function renderStudents() {
+            let filtered = students;
+
+            // Search & Filter Logic
+            const term = searchInput.value.toLowerCase();
+            filtered = filtered.filter(s => 
+                (s.name && s.name.toLowerCase().includes(term)) || 
+                (s.email && s.email.toLowerCase().includes(term)) ||
+                (s.studentPhone && s.studentPhone.includes(term))
+            );
+
+            const filterVal = filterInput.value;
+            if (filterVal === 'fully_paid') filtered = filtered.filter(s => s.remaining === 0);
+            else if (filterVal === 'has_remaining') filtered = filtered.filter(s => s.remaining > 0);
+
+            const dateVal = dateFilterInput.value;
+            if (dateVal !== 'all') {
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                filtered = filtered.filter(s => {
+                    if (!s.joinedDate) return false;
+                    const d = new Date(s.joinedDate);
+                    const sDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                    if (dateVal === 'today') return sDate.getTime() === today.getTime();
+                    if (dateVal === 'yesterday') {
+                        const y = new Date(today); y.setDate(today.getDate() - 1);
+                        return sDate.getTime() === y.getTime();
+                    }
+                    if (dateVal === 'this_week') {
+                        const w = new Date(today); w.setDate(today.getDate() - 7);
+                        return sDate >= w;
+                    }
+                    if (dateVal === 'this_month') return sDate.getMonth() === today.getMonth() && sDate.getFullYear() === today.getFullYear();
+                    return true;
+                });
+            }
+
+            const websiteVal = websiteFilterInput.value;
+            if (websiteVal === 'empty') {
+                filtered = filtered.filter(s => !s.website || s.website.trim() === '');
+            } else if (websiteVal === 'check') {
+                filtered = filtered.filter(s => s.website && s.website.toLowerCase().includes('check'));
+            }
+
+            // Sorting
+            const sortVal = sortInput.value;
+            filtered.sort((a, b) => {
+                if (sortVal === 'name_asc') return (a.name||'').localeCompare(b.name||'');
+                if (sortVal === 'date_desc') return (new Date(b.joinedDate||0)) - (new Date(a.joinedDate||0));
+                if (sortVal === 'remaining_desc') return (b.remaining||0) - (a.remaining||0);
+                if (sortVal === 'paid_desc') return (b.paid||0) - (a.paid||0);
+                return 0;
+            });
+
+            // Toggles
+            document.getElementById('searchInputClear').classList.toggle('hidden', searchInput.value === '');
+            document.getElementById('filterInputClear').classList.toggle('hidden', filterInput.value === 'all');
+            document.getElementById('dateFilterInputClear').classList.toggle('hidden', dateFilterInput.value === 'all');
+            document.getElementById('websiteFilterInputClear').classList.toggle('hidden', websiteFilterInput.value === 'all');
+
+            // Stats
+            countDisplay.innerText = filtered.length;
+            totalDebtDisplay.innerText = `$${filtered.reduce((sum, s) => sum + (parseFloat(s.remaining) || 0), 0).toLocaleString()}`;
+
+            // VIEW MODE Logic
+            if (viewMode === 'list') {
+                grid.className = 'grid grid-cols-1 gap-3'; // Single column, smaller gap
+            } else {
+                grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
+            }
+
+            grid.innerHTML = '';
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden'); return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            // Render Cards
+            filtered.forEach((s, index) => {
+                const originalIndex = students.indexOf(s);
+                const isPaidOff = s.remaining === 0;
+                const statusColor = isPaidOff ? 'bg-[var(--primary-color)] text-white' : 'bg-[var(--error-red)]/10 text-[var(--error-red)]';
+                const statusText = isPaidOff ? 'Fully Paid' : 'Payment Due';
+                const borderColor = isPaidOff ? 'border-[var(--primary-color)]' : 'border-[var(--error-red)]';
+                const remainingColor = s.remaining > 0 ? 'text-[var(--error-red)]' : 'text-[var(--primary-color)]';
+                
+                let dateDisplay = '';
+                if (s.joinedDate) dateDisplay = new Date(s.joinedDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+
+                const imgUrlSafe = s.imageUrl ? s.imageUrl.replace(/"/g, '&quot;').replace(/'/g, "\\'") : '';
+                const notes = s.notes || "";
+
+                const card = document.createElement('div');
+                card.className = `bg-[var(--card-bg)] rounded-xl card-shadow border-l-4 ${borderColor} ${viewMode === 'list' ? 'p-3 flex flex-row items-center justify-between gap-4' : 'p-5 flex flex-col'}`;
+                
+                if (viewMode === 'list') {
+                    // --- LIST VIEW ---
+                    card.innerHTML = `
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-bold text-base text-[var(--text-color)] truncate">${s.name}</h3>
+                                <button onclick="openModal('${s.id}', '${imgUrlSafe}')" class="text-gray-400 hover:text-[var(--primary-color)] transition-colors" title="View Image">
+                                    <i class="fas fa-image"></i>
+                                </button>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${statusColor} whitespace-nowrap">${statusText}</span>
+                            </div>
+                            <div class="flex items-center text-xs text-gray-500 gap-3 mt-1">
+                                <span class="truncate max-w-[150px]"><i class="fas fa-envelope mr-1"></i> ${s.email}</span>
+                                ${dateDisplay ? `<span><i class="far fa-calendar-alt mr-1"></i> ${dateDisplay}</span>` : ''}
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-4">
+                            <div class="text-right hidden sm:block">
+                                <div class="text-xs text-gray-400">Remaining</div>
+                                <div class="font-bold ${remainingColor}">$${s.remaining}</div>
+                            </div>
+                            
+                            <div class="flex gap-2">
+                                <a href="https://ermathexpert.online/wp-admin/users.php?s=${encodeURIComponent(s.email)}" target="_blank" class="w-8 h-8 flex items-center justify-center bg-[var(--primary-color)]/10 text-[var(--primary-color)] rounded-full hover:bg-[var(--primary-color)]/20 transition" title="Account"><i class="fas fa-user-circle"></i></a>
+                                <button onclick="openEditModal(${originalIndex})" class="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition"><i class="fas fa-edit"></i></button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // --- GRID VIEW (Original) ---
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="min-w-0 pr-2">
+                                <div class="flex items-center gap-2 mb-0.5">
+                                    <h3 class="font-bold text-lg text-[var(--text-color)] break-words leading-tight">${s.name}</h3>
+                                    <button onclick="openModal('${s.id}', '${imgUrlSafe}')" class="text-[var(--primary-color)] hover:text-[var(--primary-hover)] bg-gray-100 hover:bg-gray-200 w-7 h-7 flex items-center justify-center rounded-full transition-colors flex-shrink-0" title="View Image">
+                                        <i class="fas fa-image text-xs"></i>
+                                    </button>
+                                </div>
+                                <p class="text-sm text-gray-500 truncate"><i class="fas fa-envelope mr-1"></i> ${s.email}</p>
+                                ${dateDisplay ? `<p class="text-xs text-gray-400 mt-1"><i class="far fa-calendar-alt mr-1"></i> ${dateDisplay}</p>` : ''}
+                            </div>
+                            <span class="px-2 py-1 rounded text-xs font-bold ${statusColor} whitespace-nowrap flex-shrink-0">${statusText}</span>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <p class="text-xs text-gray-400 uppercase mb-1">Notes</p>
+                            <div class="relative group">
+                                <input type="text" id="note-input-${index}" 
+                                    value="${notes}"
+                                    class="w-full text-sm py-2 px-3 border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none transition-all pr-12" 
+                                    placeholder="Add note...">
+                                <button id="note-btn-${index}" onclick="saveNote('${s.id}', ${index})" 
+                                    class="absolute top-1/2 -translate-y-1/2 right-2 text-xs bg-white text-[var(--primary-color)] border border-gray-200 hover:bg-gray-50 px-2 py-1 rounded shadow-sm opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity">
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-gray-100 pt-3 flex justify-between items-center">
+                            <div class="text-sm">
+                                <span class="text-gray-400">Paid:</span>
+                                <span class="font-bold text-[var(--text-color)]">$${s.paid}</span>
+                            </div>
+                            <div class="text-sm">
+                                <span class="text-gray-400">Remaining:</span>
+                                <span class="font-bold ${remainingColor}">$${s.remaining}</span>
+                            </div>
+                        </div>
+                        <div class="mt-3 grid grid-cols-2 gap-2">
+                             <a href="https://wa.me/${s.studentPhone.replace(/^0/, '20')}" target="_blank" class="flex items-center justify-center bg-[#25D366]/10 text-[#25D366] py-2 rounded text-sm hover:bg-[#25D366]/20 transition border border-[#25D366]/20"><i class="fab fa-whatsapp text-lg mr-2"></i> Student</a>
+                             <a href="https://wa.me/${s.parentPhone.replace(/^0/, '20')}" target="_blank" class="flex items-center justify-center bg-[#25D366]/10 text-[#25D366] py-2 rounded text-sm hover:bg-[#25D366]/20 transition border border-[#25D366]/20"><i class="fab fa-whatsapp text-lg mr-2"></i> Parent</a>
+                             <button onclick="openEditModal(${originalIndex})" class="flex items-center justify-center bg-gray-50 text-gray-600 py-2 rounded text-sm hover:bg-gray-100 transition border border-gray-200"><i class="fas fa-edit mr-2"></i> Edit</button>
+                             <a href="https://ermathexpert.online/wp-admin/users.php?s=${encodeURIComponent(s.email)}" target="_blank" class="flex items-center justify-center bg-[var(--primary-color)]/10 text-[var(--primary-color)] py-2 rounded text-sm hover:bg-[var(--primary-color)]/20 transition border border-[var(--primary-color)]/20"><i class="fas fa-user-circle mr-2"></i> Account</a>
+                        </div>
+                    `;
+                }
+                grid.appendChild(card);
+            });
+        }
+        
+        // Helper function for toast notifications
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bgClass = 'bg-white';
+            let iconClass = 'fa-check-circle text-green-500';
+            
+            if (type === 'error') {
+                iconClass = 'fa-exclamation-circle text-red-500';
+            } else if (type === 'info') {
+                iconClass = 'fa-info-circle text-blue-500';
+            }
+            
+            toast.className = `toast-enter flex items-center w-full max-w-xs p-4 mb-4 text-gray-500 bg-white rounded-lg shadow dark:text-gray-400 dark:bg-gray-800 transition-all duration-300 transform`;
+            toast.innerHTML = `
+                <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 ${type === 'error' ? 'text-red-500 bg-red-100' : type === 'info' ? 'text-blue-500 bg-blue-100' : 'text-green-500 bg-green-100'} rounded-lg">
+                    <i class="fas ${type === 'error' ? 'fa-exclamation' : type === 'info' ? 'fa-info' : 'fa-check'}"></i>
+                </div>
+                <div class="ml-3 text-sm font-normal">${message}</div>
+                <button type="button" class="ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex h-8 w-8 dark:text-gray-500 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700" onclick="this.parentElement.remove()">
+                    <span class="sr-only">Close</span>
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Trigger animation
+            requestAnimationFrame(() => {
+                toast.classList.remove('toast-enter');
+                toast.classList.add('toast-enter-active');
+            });
+            
+            setTimeout(() => {
+                toast.classList.remove('toast-enter-active');
+                toast.classList.add('toast-exit-active');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- MODAL & IMAGE UTILS ---
+        function openModal(id, imageUrl) {
+            const modal = document.getElementById('imageModal');
+            document.getElementById('modalStudentId').textContent = id;
+            const modalImg = document.getElementById('modalImage');
+            const modalPlaceholder = document.getElementById('modalImagePlaceholder');
+            
+            const processedUrl = convertDriveLink(imageUrl);
+
+            modalImg.onload = () => {
+                modalImg.classList.remove('hidden');
+                modalPlaceholder.classList.add('hidden');
+            };
+            modalImg.onerror = () => {
+                modalImg.classList.add('hidden');
+                modalPlaceholder.classList.remove('hidden');
+            };
+
+            modalImg.classList.add('hidden');
+            modalPlaceholder.classList.remove('hidden');
+            modalImg.src = processedUrl;
+
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            document.body.classList.add('modal-active');
+            setTimeout(() => {
+                modal.querySelector('.modal-container').classList.remove('scale-95');
+                modal.querySelector('.modal-container').classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('imageModal');
+            const container = modal.querySelector('.modal-container');
+            container.classList.remove('scale-100');
+            container.classList.add('scale-95');
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('pointer-events-none');
+                document.body.classList.remove('modal-active');
+                document.getElementById('modalImage').src = "";
+            }, 300);
+        }
+
+        function convertDriveLink(url) {
+            if (!url) return '';
+            const match = url.match(/\/d\/([-\w]+)/) || url.match(/id=([-\w]+)/);
+            if (match && match[1]) {
+                return `https://lh3.googleusercontent.com/d/${match[1]}`;
+            }
+            return url;
+        }
+
+        document.querySelector('.modal-overlay').addEventListener('click', closeModal);
+        document.onkeydown = function(evt) {
+            if ((evt || window.event).keyCode == 27) closeModal();
+        };
+    </script>
+    <script>
+        const LOGIN_PAGE_URL = "https://mmoh16.github.io/bulk-sender/";
+        window.addEventListener("load", async function () {
+            try {
+                if (window.Clerk) {
+                    await Clerk.load();
+                    if (Clerk.user) {
+                        // Logged in
+                        document.body.style.display = "block";
+                    } else {
+                        // Not logged in
+                        // console.warn("User not logged in.");
+                        // window.location.href = LOGIN_PAGE_URL;
+                        
+                        // FOR PREVIEW/DEBUGGING: Allow access even if not logged in
+                        console.warn("User not logged in (Preview Mode)");
+                        document.body.style.display = "block";
+                        if(typeof showToast === 'function') showToast("Preview Mode: User not logged in", "info");
+                    }
+                } else {
+                    console.error("Clerk not loaded");
+                    document.body.style.display = "block";
+                }
+            } catch (err) {
+                console.error("Security check failed", err);
+                // Fallback for when Clerk fails to init (common in previews/iframes)
+                document.body.style.display = "block";
+                if(typeof showToast === 'function') {
+                    showToast("Auth Service Failed - Showing Preview", "error");
+                }
+            }
+        });
+    </script>
+</body>
+</html>
