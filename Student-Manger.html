@@ -353,7 +353,14 @@
         // --- ONESIGNAL FUNCTIONS ---
         function requestNotificationPermission() {
             window.OneSignalDeferred.push(async function(OneSignal) {
-                await OneSignal.Slidedown.promptPush();
+                // Change to direct requestPermission for button click
+                const accepted = await OneSignal.Notifications.requestPermission();
+                if (accepted) {
+                    updateNotifyIcon(true);
+                    showToast("Notifications enabled!", "success");
+                } else {
+                    console.log("Notification permission not accepted");
+                }
             });
         }
         
