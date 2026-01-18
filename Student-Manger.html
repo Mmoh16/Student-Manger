@@ -12,7 +12,15 @@
       OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
           appId: "b58e7b17-b719-486a-9d7b-5cb98d8533c3",
-          path: "/Student-Manger/", // Critical for GitHub Pages
+          path: "/Student-Manger/", // Folder where OneSignalSDKWorker.js is located
+          serviceWorkerParam: { scope: "/Student-Manger/" }, // critical for sub-directory sites
+        });
+        
+        // Debugging: Log when subscription changes
+        OneSignal.User.PushSubscription.addEventListener("change", (event) => {
+            if (event.current.optedIn) {
+                console.log("User successfully subscribed to OneSignal!");
+            }
         });
       });
     </script>
@@ -367,10 +375,14 @@
             if (Notification.permission === 'granted') {
                 showToast("Notifications are already enabled!", "info");
                 updateNotifyIcon(true);
+                // Ensure OneSignal is synced even if permission was already granted
+                window.OneSignalDeferred.push(async function(OneSignal) {
+                    await OneSignal.User.PushSubscription.optIn();
+                });
                 return;
             }
 
-            // 3. Direct Native Request (Bypasses SDK delay to ensure prompt shows)
+            // 3. Direct Native Request
             try {
                 console.log("Requesting native permission...");
                 const permission = await Notification.requestPermission();
@@ -379,10 +391,17 @@
                     updateNotifyIcon(true);
                     showToast("Notifications enabled!", "success");
                     
-                    // Sync with OneSignal if available
+                    // Sync with OneSignal immediately
                     if (window.OneSignalDeferred) {
                         window.OneSignalDeferred.push(async function(OneSignal) {
-                            await OneSignal.Notifications.requestPermission();
+                            console.log("Registering with OneSignal...");
+                            await OneSignal.User.PushSubscription.optIn();
+                            
+                            // Link to Clerk User ID if logged in
+                            if (window.Clerk && window.Clerk.user) {
+                                console.log("Linking to Clerk ID:", window.Clerk.user.id);
+                                OneSignal.login(window.Clerk.user.id);
+                            }
                         });
                     }
                 } else {
