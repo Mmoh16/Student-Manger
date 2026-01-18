@@ -17,15 +17,13 @@
       });
     </script>
 
-    <!-- === UPDATED CLERK SCRIPT (Matches Index) === -->
     <script
         async
         crossorigin="anonymous"
-        data-clerk-publishable-key="pk_test_ZXhjaXRpbmctbWFzdGlmZi04MC5jbGVyay5hY2NvdW50cy5kZXYk"
-        src="https://exciting-mastiff-80.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
+        data-clerk-publishable-key="pk_test_cHJlcGFyZWQtZmFsY29uLTU2LmNsZXJrLmFjY291bnRzLmRldiQ"
+        src="https://prepared-falcon-56.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
         type="text/javascript">
     </script>
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -82,7 +80,8 @@
         .modal-active { overflow-x: hidden; overflow-y: visible !important; }
     </style>
 </head>
-<!--<body style="display: none;"> -->
+<!-- <body style="display: none;"> -->
+    <body>
     <!-- Toast Container -->
     <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-3 pointer-events-none w-full max-w-sm px-4 sm:px-0"></div>
 
@@ -91,7 +90,7 @@
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold"><i class="fas fa-user-graduate mr-2"></i>Student Tracker</h1>
             <div class="flex gap-2 items-center">
-                <!-- Notification Button (UPDATED) -->
+                <!-- Notification Button (ADDED) -->
                 <button onclick="requestNotificationPermission()" id="notifyBtn" class="bg-white/20 text-white px-3 py-2 rounded-full font-bold text-sm hover:bg-white/30 transition backdrop-blur-sm" title="Enable Notifications">
                     <i class="fas fa-bell"></i>
                 </button>
@@ -300,8 +299,7 @@
         // ==========================================
 
         let students = []; 
-        let viewMode = localStorage.getItem(VIEW_MODE_KEY) || 'grid'; 
-        let originalStudentData = {}; // Store original data for comparison
+        let viewMode = localStorage.getItem(VIEW_MODE_KEY) || 'grid'; // 'grid' or 'list'
 
         // DOM Elements
         const grid = document.getElementById('studentGrid');
@@ -324,7 +322,8 @@
         // Initial Load
         document.addEventListener('DOMContentLoaded', () => {
             console.log("App initialized");
-            // Check notifications status to style button
+            
+            // --- ONESIGNAL CHECK ---
             window.OneSignalDeferred.push(async function(OneSignal) {
                 const permission = await OneSignal.Notifications.permission;
                 if (permission) {
@@ -332,6 +331,7 @@
                 }
             });
 
+            // Load from cache first for speed
             const cachedData = localStorage.getItem(CACHE_KEY);
             if (cachedData) {
                 console.log("Loading from cache");
@@ -340,24 +340,23 @@
                 showToast("Loaded from cache", "info");
             }
             updateViewToggleIcon();
-            fetchStudents(false);
+            fetchStudents(false); // fetch fresh data
         });
 
+        // Event Listeners
         searchInput.addEventListener('input', renderStudents);
         filterInput.addEventListener('change', renderStudents);
         dateFilterInput.addEventListener('change', renderStudents);
         websiteFilterInput.addEventListener('change', renderStudents);
         sortInput.addEventListener('change', renderStudents);
 
-        // --- UPDATED NOTIFICATION FUNCTION ---
+        // --- ONESIGNAL FUNCTIONS ---
         function requestNotificationPermission() {
-            // Use OneSignal's Slidedown prompt
             window.OneSignalDeferred.push(async function(OneSignal) {
                 await OneSignal.Slidedown.promptPush();
             });
         }
         
-        // Function to update icon style if granted
         function updateNotifyIcon(granted) {
             const icon = notifyBtn.querySelector('i');
             if (granted) {
@@ -368,7 +367,7 @@
                 notifyBtn.title = "Notifications Enabled";
             }
         }
-
+        
         // --- VIEW FUNCTIONS ---
         function toggleViewMode() {
             viewMode = viewMode === 'grid' ? 'list' : 'grid';
@@ -393,6 +392,7 @@
         async function fetchStudents(forceRefresh = false) {
             console.log("Fetching students from:", GET_WEBHOOK_URL);
             
+            // Only show skeleton if no data or forced refresh
             if (students.length === 0 || forceRefresh) {
                 renderSkeleton();
                 emptyState.classList.add('hidden');
@@ -405,6 +405,7 @@
                 const rawData = await response.json();
                 console.log("Data received:", rawData);
 
+                // Robust parsing
                 let rawList = [];
                 if (Array.isArray(rawData)) {
                     rawList = rawData;
@@ -415,6 +416,7 @@
                 }
 
                 students = rawList.map((item, index) => {
+                    // Date Parsing
                     let joinedDate = null;
                     try {
                         const rawDate = item["date"];
@@ -430,6 +432,7 @@
                         }
                     } catch (e) { console.warn("Date parse error", e); }
 
+                    // Image Parsing
                     let rawImg = item["image"] || item["Image"];
                     let finalImg = "";
                     if (Array.isArray(rawImg) && rawImg.length > 0) {
@@ -454,6 +457,7 @@
                     };
                 });
                 
+                // Update Cache
                 localStorage.setItem(CACHE_KEY, JSON.stringify(students));
                 renderStudents();
                 if(forceRefresh) showToast("Data updated successfully", "success");
@@ -462,6 +466,7 @@
                 console.error("Error fetching data:", error);
                 showToast("Failed to load data", "error");
                 
+                // Only show error grid if we have NO data (cached or otherwise)
                 if(students.length === 0) {
                     grid.innerHTML = `
                         <div class="col-span-full text-center p-8 bg-red-50 rounded-xl border border-red-200">
@@ -476,14 +481,15 @@
             }
         }
 
-        // ... existing functions (renderSkeleton, saveNote, deleteStudent, removeStudent) ...
         function renderSkeleton() {
             grid.innerHTML = '';
+            // Determine skeleton count based on view mode or default
             const count = 6; 
             const skeletonClass = viewMode === 'list' ? 'col-span-full' : '';
             
+            // Adjust grid container for skeleton
             if (viewMode === 'list') {
-                grid.className = 'grid grid-cols-1 gap-3';
+                grid.className = 'grid grid-cols-1 gap-4';
             } else {
                 grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
             }
@@ -508,6 +514,7 @@
             }
         }
 
+        // Save Note Logic
         async function saveNote(studentId, index) {
             const input = document.getElementById(`note-input-${index}`);
             const btn = document.getElementById(`note-btn-${index}`);
@@ -527,8 +534,7 @@
                 btn.innerHTML = '<i class="fas fa-check"></i>';
                 btn.classList.add('bg-green-100', 'text-green-600', 'border-green-200');
                 students[index].notes = newNote;
-                localStorage.setItem(CACHE_KEY, JSON.stringify(students));
-                
+                localStorage.setItem(CACHE_KEY, JSON.stringify(students)); // Update cache
                 showToast("Note saved", "success");
 
                 setTimeout(() => { 
@@ -543,6 +549,7 @@
             }
         }
 
+        // Delete Student Logic
         async function deleteStudent() {
             const id = document.getElementById('studentId').value;
             if (!id) return;
@@ -563,8 +570,7 @@
                 if (!response.ok) throw new Error('Failed to delete');
                 
                 showToast("Student deleted permanently", "success");
-                
-                await fetchStudents(true);
+                await fetchStudents(true); // Force refresh
                 document.getElementById('addModal').classList.add('hidden');
             } catch (error) {
                 showToast("Error deleting student", "error");
@@ -576,6 +582,7 @@
             }
         }
 
+        // Remove Student Logic
         async function removeStudent() {
             const id = document.getElementById('studentId').value;
             if (!id) return;
@@ -596,8 +603,7 @@
                 if (!response.ok) throw new Error('Failed to remove');
                 
                 showToast("Student removed", "success");
-
-                await fetchStudents(true);
+                await fetchStudents(true); // Force refresh
                 document.getElementById('addModal').classList.add('hidden');
             } catch (error) {
                 showToast("Error removing student", "error");
@@ -609,13 +615,11 @@
             }
         }
 
-        // Add/Edit Form Handler - UPDATED WITH VISUAL FEEDBACK & EDITED FIELDS
+        // Add/Edit Form Handler
         addForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const originalBtnText = submitBtn.innerText;
-            
-            // Visual Loading State
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+            submitBtn.innerText = "Saving...";
             submitBtn.disabled = true;
             deleteBtn.disabled = true;
             removeBtn.disabled = true;
@@ -630,56 +634,21 @@
                 "Remaining": parseFloat(document.getElementById('newRemaining').value) || 0
             };
 
-            // Calculate Edited Fields
-            const editedFields = [];
-            const isEdit = newStudent.id !== '';
-            
-            if (isEdit && originalStudentData && Object.keys(originalStudentData).length > 0) {
-                if (newStudent.Name !== originalStudentData.name) editedFields.push("Name");
-                if (newStudent.Email !== originalStudentData.email) editedFields.push("Email");
-                if (newStudent["Student Phone"] !== originalStudentData.studentPhone) editedFields.push("Student Phone");
-                if (newStudent["Parent Phone"] !== originalStudentData.parentPhone) editedFields.push("Parent Phone");
-                if (newStudent.Paid !== originalStudentData.paid) editedFields.push("Paid");
-                if (newStudent.Remaining !== originalStudentData.remaining) editedFields.push("Remaining");
-            }
-            
-            // Add edited fields metadata to payload
-            newStudent.edited_fields = editedFields;
-
             try {
                 const response = await fetch(POST_WEBHOOK_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newStudent)
                 });
-                
                 if (!response.ok) throw new Error('Failed to save');
                 
-                // Success Visual State
-                submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Saved';
-                submitBtn.classList.remove('bg-[var(--primary-color)]');
-                submitBtn.classList.add('bg-green-600');
-                
-                // Update local data and cache immediately for responsiveness
-                await fetchStudents(true); 
-                
-                // Wait 1 second before closing to show success
-                setTimeout(() => {
-                    document.getElementById('addModal').classList.add('hidden');
-                    addForm.reset();
-                    
-                    // Reset Button
-                    submitBtn.innerText = "Save Student"; // Reset text
-                    submitBtn.classList.remove('bg-green-600');
-                    submitBtn.classList.add('bg-[var(--primary-color)]');
-                    submitBtn.disabled = false;
-                    deleteBtn.disabled = false;
-                    removeBtn.disabled = false;
-                }, 1000);
-
+                showToast("Student saved successfully", "success");
+                await fetchStudents(true); // Force refresh
+                document.getElementById('addModal').classList.add('hidden');
+                addForm.reset();
             } catch (error) {
                 showToast("Error saving data", "error");
-                // Reset Button on Error
+            } finally {
                 submitBtn.innerText = originalBtnText;
                 submitBtn.disabled = false;
                 deleteBtn.disabled = false;
@@ -687,11 +656,46 @@
             }
         });
 
+        // --- TOAST NOTIFICATIONS ---
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            // Icon & Color based on type
+            let icon = 'fa-info-circle';
+            let bgClass = 'bg-gray-800';
+            if (type === 'success') { icon = 'fa-check-circle'; bgClass = 'bg-green-600'; }
+            if (type === 'error') { icon = 'fa-exclamation-circle'; bgClass = 'bg-red-600'; }
+            if (type === 'info') { icon = 'fa-info-circle'; bgClass = 'bg-blue-600'; }
+
+            toast.className = `flex items-center gap-3 p-4 rounded-lg shadow-lg text-white pointer-events-auto toast-enter ${bgClass}`;
+            toast.innerHTML = `
+                <i class="fas ${icon} text-lg"></i>
+                <span class="font-medium text-sm">${message}</span>
+            `;
+
+            container.appendChild(toast);
+
+            // Animation In
+            requestAnimationFrame(() => {
+                toast.classList.remove('toast-enter');
+                toast.classList.add('toast-enter-active');
+            });
+
+            // Animation Out
+            setTimeout(() => {
+                toast.classList.remove('toast-enter-active');
+                toast.classList.add('toast-exit-active');
+                toast.addEventListener('transitionend', () => {
+                    toast.remove();
+                });
+            }, 3000);
+        }
+
         // --- UI FUNCTIONS ---
         function openAddModal() {
             addForm.reset();
             document.getElementById('studentId').value = ''; 
-            originalStudentData = {}; // Clear original data
             modalTitle.innerText = "Add Student to Notion";
             submitBtn.innerText = "Save Student";
             deleteBtn.classList.add('hidden');
@@ -702,10 +706,6 @@
         function openEditModal(index) {
             const student = students[index];
             if(!student) return;
-            
-            // Store original data for comparison
-            originalStudentData = { ...student };
-
             document.getElementById('studentId').value = student.id;
             document.getElementById('newName').value = student.name;
             document.getElementById('newEmail').value = student.email;
@@ -713,7 +713,6 @@
             document.getElementById('newParentPhone').value = student.parentPhone;
             document.getElementById('newPaid').value = student.paid;
             document.getElementById('newRemaining').value = student.remaining;
-            
             modalTitle.innerText = "Edit Student";
             submitBtn.innerText = "Update Student";
             deleteBtn.classList.remove('hidden');
@@ -903,47 +902,6 @@
                 grid.appendChild(card);
             });
         }
-        
-        // Helper function for toast notifications
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            
-            let bgClass = 'bg-white';
-            let iconClass = 'fa-check-circle text-green-500';
-            
-            if (type === 'error') {
-                iconClass = 'fa-exclamation-circle text-red-500';
-            } else if (type === 'info') {
-                iconClass = 'fa-info-circle text-blue-500';
-            }
-            
-            toast.className = `toast-enter flex items-center w-full max-w-xs p-4 mb-4 text-gray-500 bg-white rounded-lg shadow dark:text-gray-400 dark:bg-gray-800 transition-all duration-300 transform`;
-            toast.innerHTML = `
-                <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 ${type === 'error' ? 'text-red-500 bg-red-100' : type === 'info' ? 'text-blue-500 bg-blue-100' : 'text-green-500 bg-green-100'} rounded-lg">
-                    <i class="fas ${type === 'error' ? 'fa-exclamation' : type === 'info' ? 'fa-info' : 'fa-check'}"></i>
-                </div>
-                <div class="ml-3 text-sm font-normal">${message}</div>
-                <button type="button" class="ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex h-8 w-8 dark:text-gray-500 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700" onclick="this.parentElement.remove()">
-                    <span class="sr-only">Close</span>
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            
-            container.appendChild(toast);
-            
-            // Trigger animation
-            requestAnimationFrame(() => {
-                toast.classList.remove('toast-enter');
-                toast.classList.add('toast-enter-active');
-            });
-            
-            setTimeout(() => {
-                toast.classList.remove('toast-enter-active');
-                toast.classList.add('toast-exit-active');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
 
         // --- MODAL & IMAGE UTILS ---
         function openModal(id, imageUrl) {
@@ -1002,38 +960,23 @@
             if ((evt || window.event).keyCode == 27) closeModal();
         };
     </script>
-    <script>
-        const LOGIN_PAGE_URL = "https://mmoh16.github.io/bulk-sender/";
+   <!-- <script>
+        const LOGIN_PAGE_URL = "https://mmoh16.github.io/Student-Manger.html/";
         window.addEventListener("load", async function () {
             try {
-                if (window.Clerk) {
-                    await Clerk.load();
-                    if (Clerk.user) {
-                        // Logged in
-                        document.body.style.display = "block";
-                    } else {
-                        // Not logged in
-                        // console.warn("User not logged in.");
-                        // window.location.href = LOGIN_PAGE_URL;
-                        
-                        // FOR PREVIEW/DEBUGGING: Allow access even if not logged in
-                        console.warn("User not logged in (Preview Mode)");
-                        document.body.style.display = "block";
-                        if(typeof showToast === 'function') showToast("Preview Mode: User not logged in", "info");
-                    }
-                } else {
-                    console.error("Clerk not loaded");
+                if (!window.Clerk) { console.error("Clerk not loaded"); return; }
+                await Clerk.load();
+                if (Clerk.user) {
                     document.body.style.display = "block";
+                    if (typeof initApp === "function") initApp();
+                } else {
+                    window.location.href = LOGIN_PAGE_URL;
                 }
             } catch (err) {
                 console.error("Security check failed", err);
-                // Fallback for when Clerk fails to init (common in previews/iframes)
-                document.body.style.display = "block";
-                if(typeof showToast === 'function') {
-                    showToast("Auth Service Failed - Showing Preview", "error");
-                }
+                window.location.href = LOGIN_PAGE_URL;
             }
         });
-    </script>
+    </script> -->
 </body>
 </html>
