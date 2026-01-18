@@ -351,7 +351,7 @@
         sortInput.addEventListener('change', renderStudents);
 
         // --- ONESIGNAL FUNCTIONS ---
-        function requestNotificationPermission() {
+        async function requestNotificationPermission() {
             // Visual feedback
             const icon = notifyBtn.querySelector('i');
             icon.classList.add('fa-shake');
@@ -363,32 +363,35 @@
                 return;
             }
 
-            // 2. Try OneSignal first
-            window.OneSignalDeferred.push(async function(OneSignal) {
-                try {
-                    console.log("Requesting OneSignal permission...");
-                    await OneSignal.Notifications.requestPermission();
+            // 2. Check if already granted
+            if (Notification.permission === 'granted') {
+                showToast("Notifications are already enabled!", "info");
+                updateNotifyIcon(true);
+                return;
+            }
+
+            // 3. Direct Native Request (Bypasses SDK delay to ensure prompt shows)
+            try {
+                console.log("Requesting native permission...");
+                const permission = await Notification.requestPermission();
+                
+                if (permission === 'granted') {
+                    updateNotifyIcon(true);
+                    showToast("Notifications enabled!", "success");
                     
-                    if (OneSignal.Notifications.permission) {
-                        updateNotifyIcon(true);
-                        showToast("Notifications enabled!", "success");
-                    } else {
-                        console.warn("Permission dismissed or waiting.");
+                    // Sync with OneSignal if available
+                    if (window.OneSignalDeferred) {
+                        window.OneSignalDeferred.push(async function(OneSignal) {
+                            await OneSignal.Notifications.requestPermission();
+                        });
                     }
-                } catch (e) {
-                    console.error("OneSignal Error, trying native fallback:", e);
-                    // 3. Native Fallback if OneSignal fails
-                    try {
-                        const permission = await Notification.requestPermission();
-                        if (permission === 'granted') {
-                            updateNotifyIcon(true);
-                            showToast("Notifications enabled!", "success");
-                        }
-                    } catch (nativeErr) {
-                        console.error("Native request failed:", nativeErr);
-                    }
+                } else {
+                    console.warn("Permission not granted:", permission);
                 }
-            });
+            } catch (error) {
+                console.error("Permission request error:", error);
+                showToast("Error requesting permission", "error");
+            }
         }
         
         function updateNotifyIcon(granted) {
