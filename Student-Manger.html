@@ -352,14 +352,41 @@
 
         // --- ONESIGNAL FUNCTIONS ---
         function requestNotificationPermission() {
+            // Visual feedback
+            const icon = notifyBtn.querySelector('i');
+            icon.classList.add('fa-shake');
+            setTimeout(() => icon.classList.remove('fa-shake'), 1000);
+
+            // 1. Check if already denied
+            if (Notification.permission === 'denied') {
+                showToast("Notifications are blocked. Reset permissions in browser settings.", "error");
+                return;
+            }
+
+            // 2. Try OneSignal first
             window.OneSignalDeferred.push(async function(OneSignal) {
-                // Change to direct requestPermission for button click
-                const accepted = await OneSignal.Notifications.requestPermission();
-                if (accepted) {
-                    updateNotifyIcon(true);
-                    showToast("Notifications enabled!", "success");
-                } else {
-                    console.log("Notification permission not accepted");
+                try {
+                    console.log("Requesting OneSignal permission...");
+                    await OneSignal.Notifications.requestPermission();
+                    
+                    if (OneSignal.Notifications.permission) {
+                        updateNotifyIcon(true);
+                        showToast("Notifications enabled!", "success");
+                    } else {
+                        console.warn("Permission dismissed or waiting.");
+                    }
+                } catch (e) {
+                    console.error("OneSignal Error, trying native fallback:", e);
+                    // 3. Native Fallback if OneSignal fails
+                    try {
+                        const permission = await Notification.requestPermission();
+                        if (permission === 'granted') {
+                            updateNotifyIcon(true);
+                            showToast("Notifications enabled!", "success");
+                        }
+                    } catch (nativeErr) {
+                        console.error("Native request failed:", nativeErr);
+                    }
                 }
             });
         }
