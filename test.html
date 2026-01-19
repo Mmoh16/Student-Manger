@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OneSignal Test</title>
+    <title>OneSignal Custom Test</title>
     
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
@@ -12,10 +12,13 @@
         await OneSignal.init({
           appId: "b58e7b17-b719-486a-9d7b-5cb98d8533c3",
           
-          // CORRECT PATH: Point to the folder where the worker file is
+          // 1. Force the correct folder path
           path: "/Student-Manger/",
-
-          // CORRECT SCOPE: Restrict to the Student-Manger folder
+          
+          // 2. Explicitly name the worker file path
+          serviceWorkerPath: "OneSignalSDKWorker.js",
+          
+          // 3. Set the scope to the folder
           serviceWorkerParam: { scope: "/Student-Manger/" },
           
           notifyButton: {
@@ -26,7 +29,7 @@
     </script>
 </head>
 <body>
-    <h1>Notification Test Page</h1>
-    <p>If you see the red bell in the corner, it works!</p>
+    <h1>Custom Code Test</h1>
+    <p>Check the bell icon.</p>
 </body>
 </html>
