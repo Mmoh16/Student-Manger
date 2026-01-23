@@ -15,19 +15,42 @@
   OneSignalDeferred.push(async function(OneSignal) {
     await OneSignal.init({
       appId: "b58e7b17-b719-486a-9d7b-5cb98d8533c3",
-      safari_web_id: "web.onesignal.auto.45e32f52-047f-48ea-8b6f-5a9d2fcde2db", // ✅ Updated to correct ID
-      notifyButton: {
-        enable: true,
-      },
-      // This tells OneSignal to look inside your folder, not the root
+      safari_web_id: "web.onesignal.auto.45e32f52-047f-48ea-8b6f-5a9d2fcde2db",
+      notifyButton: { enable: true }, 
+      
+      // ✅ FIX 1: Explicitly tell Android the scope
       path: "/Student-Manger/",
+      serviceWorkerParam: { scope: "/Student-Manger/" }, 
     });
 
-    // Tag the user immediately after initialization
+    // Tag the user (will happen silently once they subscribe)
     OneSignal.User.addTag("course", "EST1 Adv March");
   });
 </script>
 
+<button id="manual-subscribe" style="
+    display: block; 
+    width: 80%; 
+    margin: 20px auto; 
+    padding: 15px; 
+    background-color: #007bff; 
+    color: white; 
+    font-size: 18px; 
+    border: none; 
+    border-radius: 8px; 
+    text-align: center;">
+  🔔 Click to Get Class Updates
+</button>
+
+<script>
+  // Link the button to the OneSignal Prompt
+  document.getElementById("manual-subscribe").addEventListener("click", function() {
+    console.log("Requesting permission...");
+    window.OneSignalDeferred.push(function(OneSignal) {
+      OneSignal.Slidedown.promptPush();
+    });
+  });
+</script>
     
 <script>
   function checkOneSignal() {
