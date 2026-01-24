@@ -1,7 +1,8 @@
 {
   "name": "Student Manager",
   "short_name": "StudentMgr",
-  "start_url": "./Student-Manger.html",
+  "start_url": "/Student-Manger/",
+  "scope": "/Student-Manger/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2c3e50",
@@ -9,7 +10,8 @@
     {
       "src": "https://cdn-icons-png.flaticon.com/512/3533/3533544.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
