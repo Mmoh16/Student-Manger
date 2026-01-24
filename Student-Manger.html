@@ -283,7 +283,18 @@
             }
 
             try {
-                const res = await fetch(URLS.GET, { method: 'GET', cache: 'no-store' });
+                // CACHE BUSTING: Add timestamp to force fresh fetch
+                const uniqueUrl = `${URLS.GET}?t=${Date.now()}`;
+                
+                const res = await fetch(uniqueUrl, { 
+                    method: 'GET', 
+                    cache: 'no-store',
+                    headers: {
+                        'Pragma': 'no-cache',
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+
                 if(!res.ok) throw new Error("API Error");
                 const data = await res.json();
                 
@@ -306,7 +317,10 @@
 
                 localStorage.setItem(CACHE_KEY, JSON.stringify(allStudents));
                 processAndRender();
+                
+                // Show toast only on manual refresh, log strictly for debug on auto-load
                 if(force) showToast("Data refreshed", "success");
+                else console.log("Auto-sync complete");
 
             } catch(e) {
                 console.error(e);
