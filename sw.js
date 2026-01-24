@@ -1,8 +1,13 @@
+const CACHE_NAME = 'student-mgr-v1';
+const ASSETS = [
+  '/Student-Manger/',
+  '/Student-Manger/courses.html',
+  '/Student-Manger/Student-Manger.html'
+];
+
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open('student-mgr-v1').then((cache) => {
-      return cache.addAll(['./Student-Manger.html']);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
   );
 });
 
