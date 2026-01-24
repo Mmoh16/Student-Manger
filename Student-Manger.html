@@ -274,10 +274,11 @@
                 } catch(e) { console.error("Cache parse error"); }
             }
 
+            // Fix: Actually call the function we defined to update the button icon/text
             updateViewToggleIcon();
             
-            // 2. Start Background Sync (silent refresh)
-            fetchStudents(false);
+            // 2. Start Background Sync (silent refresh) after 500ms to ensure browser is ready
+            setTimeout(() => fetchStudents(false), 500);
         });
 
         // RE-SYNC ON TAB FOCUS (For mobile "opening after closing" behavior)
@@ -295,27 +296,25 @@
             if(refreshIcon) refreshIcon.classList.add('fa-spin');
             syncIndicator.classList.remove('hidden');
 
+            console.log("Starting Sync..."); // Debug Log
+
             // Only show blocking loader if we have NO data at all
             if(allStudents.length === 0) {
                 grids[currentTab].innerHTML = '<div class="col-span-full text-center text-gray-400 py-10"><i class="fas fa-spinner fa-spin text-2xl"></i> Loading...</div>';
             }
 
             try {
-                // AGGRESSIVE CACHE BUSTING
-                const uniqueUrl = `${URLS.GET}?t=${Date.now()}&r=${Math.random()}`;
+                // IMPORTANT: Removed cache-busting params (?t=) as they caused 404s/Route Misses on Strict N8N servers
+                const url = URLS.GET;
                 
-                const res = await fetch(uniqueUrl, { 
-                    method: 'GET', 
-                    cache: 'reload', // Forces network request
-                    headers: {
-                        'Pragma': 'no-cache',
-                        'Cache-Control': 'no-cache, no-store, must-revalidate'
-                    }
-                });
+                // Using simple GET request to avoid CORS complexity
+                const res = await fetch(url);
 
-                if(!res.ok) throw new Error("API Error");
+                if(!res.ok) throw new Error(`Server returned ${res.status}`);
                 const data = await res.json();
                 
+                console.log("Data Received", data); // Debug Log
+
                 let rawList = Array.isArray(data) ? data : (data.data || data.body || []);
                 
                 allStudents = rawList.map((item, idx) => ({
@@ -340,8 +339,8 @@
                 if(force) showToast("Data refreshed", "success");
 
             } catch(e) {
-                console.error(e);
-                if(force) showToast("Failed to sync data", "error");
+                console.error("Fetch failed:", e);
+                if(force) showToast(`Sync Failed: ${e.message}`, "error");
                 
                 if(allStudents.length === 0) {
                     grids[currentTab].innerHTML = `<div class="col-span-full text-center text-red-400">Failed to load. <button onclick="fetchStudents(true)" class="underline">Retry</button></div>`;
@@ -685,16 +684,28 @@
             }
         });
 
+        // Toggle logic with visual update
+        function toggleViewMode() {
+            viewMode = viewMode === 'grid' ? 'list' : 'grid';
+            localStorage.setItem(VIEW_MODE_KEY, viewMode);
+            updateViewToggleIcon(); // Update icon
+            processAndRender();     // Update UI
+        }
+
+        // Restored helper function to fix ReferenceError
+        function updateViewToggleIcon() {
+            const btn = document.getElementById('viewToggleBtn');
+            if(viewMode === 'grid') {
+                btn.innerHTML = '<i class="fas fa-list mr-1"></i> List View';
+            } else {
+                btn.innerHTML = '<i class="fas fa-th-large mr-1"></i> Grid View';
+            }
+        }
+
         function switchTab(tab) {
             currentTab = tab;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'tab-active'));
             document.getElementById(`tab-${tab}`).classList.add('active', 'tab-active');
-            processAndRender();
-        }
-
-        function toggleViewMode() {
-            viewMode = viewMode === 'grid' ? 'list' : 'grid';
-            localStorage.setItem(VIEW_MODE_KEY, viewMode);
             processAndRender();
         }
 
