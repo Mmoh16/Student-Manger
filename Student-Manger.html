@@ -799,5 +799,23 @@
             }
         }
     </script>
+    <script>
+        const LOGIN_PAGE_URL = "https://mmoh16.github.io/Student-Manger.html/";
+        window.addEventListener("load", async function () {
+            try {
+                if (!window.Clerk) { console.error("Clerk not loaded"); return; }
+                await Clerk.load();
+                if (Clerk.user) {
+                    document.body.style.display = "block";
+                    if (typeof initApp === "function") initApp();
+                } else {
+                    window.location.href = LOGIN_PAGE_URL;
+                }
+            } catch (err) {
+                console.error("Security check failed", err);
+                window.location.href = LOGIN_PAGE_URL;
+            }
+        });
+     </script>
 </body>
 </html>
