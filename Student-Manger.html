@@ -2,56 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Student Manager Pro - EST1 Adv March</title>
+    <!-- ZOOM FIX: Set initial scale to 0.75 for mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=0.75">
+    <title>Student Manager - EST1 Adv March</title>
+
+
     <link rel="manifest" href="manifest.json">
 
-    <!-- === PRE-LOADERS === -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('Service Worker Registered'))
+        .catch(err => console.log('Registration Failed', err));
+    });
+  }
+</script>
 
-    <!-- === CONFIGURATION === -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
-                    colors: {
-                        primary: { 50: '#f0fdfa', 100: '#ccfbf1', 500: '#14b8a6', 600: '#0d9488', 700: '#0f766e' },
-                        surface: '#F8FAFC'
-                    }
-                }
-            }
-        }
-    </script>
-
-    <style>
-        body { background-color: #F1F5F9; -webkit-tap-highlight-color: transparent; }
-        
-        /* Smooth Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
-        
-        /* Transitions */
-        .card-hover { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
-        
-        /* Loader */
-        .loader-ring { display: inline-block; width: 20px; height: 20px; }
-        .loader-ring:after { content: " "; display: block; width: 18px; height: 18px; margin: 1px; border-radius: 50%; border: 2px solid #fff; border-color: #fff transparent #fff transparent; animation: lds-dual-ring 1.2s linear infinite; }
-        @keyframes lds-dual-ring { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Mobile Optimizations */
-        .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
-        
-        /* Toast Animation */
-        @keyframes slideIn { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .toast-animate { animation: slideIn 0.3s ease-out forwards; }
-    </style>
-
-    <!-- === THIRD PARTY SDKS === -->
+    <!-- === ONESIGNAL NOTIFICATIONS === -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
       window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -59,208 +27,215 @@
         await OneSignal.init({
           appId: "b58e7b17-b719-486a-9d7b-5cb98d8533c3",
           safari_web_id: "web.onesignal.auto.45e32f52-047f-48ea-8b6f-5a9d2fcde2db",
-          notifyButton: { enable: false }, // Custom button used
+          notifyButton: { enable: true }, 
           path: "/Student-Manger/",
           serviceWorkerParam: { scope: "/Student-Manger/" }, 
         });
         OneSignal.User.addTag("course", "EST1 Adv March");
       });
     </script>
-    
+
+    <!-- === CLERK AUTH === -->
     <script
-        async crossorigin="anonymous"
+        async
+        crossorigin="anonymous"
         data-clerk-publishable-key="pk_test_ZXhjaXRpbmctbWFzdGlmZi04MC5jbGVyay5hY2NvdW50cy5kZXYk"
         src="https://exciting-mastiff-80.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
         type="text/javascript">
     </script>
-    
-    <script src="teacher_guard.js"></script>
-</head>
-<body> <!--class="text-slate-800 antialiased hidden" id="appBody"-->
 
-    <!-- === NAVIGATION BAR === -->
-    <nav class="bg-white sticky top-0 z-30 border-b border-slate-200 shadow-sm backdrop-blur-lg bg-white/90">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <!-- Logo & Brand -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        :root {
+            --primary-color: #0F9E99;
+            --primary-hover: #0b7a76;
+            --bg-color: #EFE9E0;
+            --card-bg: #FFFFFF;
+            --text-color: #333333;
+            --accent-green: #25D366;
+            --error-red: #d32f2f;
+            --pending-orange: #f59e0b;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-color);
+            /* ZOOM FIX: Scale down content for Desktop/Laptop */
+            zoom: 0.75; 
+        }
+
+        .card-shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); }
+        
+        /* Tab Animations */
+        .tab-btn { transition: all 0.3s ease; border-bottom: 2px solid transparent; }
+        .tab-btn.active { border-bottom-color: var(--primary-color); color: var(--primary-color); background-color: rgba(15, 158, 153, 0.05); }
+
+        /* Skeleton Loading */
+        .skeleton {
+            background-color: #e5e7eb;
+            animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+
+        /* Toast Notifications */
+        .toast-enter { transform: translateX(100%); opacity: 0; }
+        .toast-enter-active { transform: translateX(0); opacity: 1; transition: all 300ms ease-out; }
+        .toast-exit { transform: translateX(0); opacity: 1; }
+        .toast-exit-active { transform: translateX(100%); opacity: 0; transition: all 300ms ease-in; }
+
+        .modal { transition: opacity 0.25s ease; }
+        .modal-active { overflow-x: hidden; overflow-y: visible !important; }
+        
+        /* Sync Spinner */
+        .sync-spinner { display: inline-block; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <script src="teacher_guard.js"></script>
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-3 pointer-events-none w-full max-w-sm px-4 sm:px-0"></div>
+
+    <!-- Header & Search Area -->
+    <div class="sticky top-0 z-20 shadow-md bg-white">
+        <!-- Main Header -->
+        <header class="bg-[var(--primary-color)] text-white">
+            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
                 <div class="flex items-center gap-3">
-                    <div class="bg-primary-50 p-2 rounded-lg text-primary-600">
-                        <i class="fas fa-graduation-cap text-xl"></i>
-                    </div>
-                    <div>
-                        <h1 class="font-bold text-slate-800 text-lg leading-none">EST1 Manager</h1>
-                        <span class="text-xs text-slate-500 font-medium">Adv March Cohort</span>
-                    </div>
-                    <!-- Sync Indicator -->
-                    <span id="syncIndicator" class="hidden ml-2 px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] uppercase font-bold tracking-wider rounded-full flex items-center gap-1">
-                        <i class="fas fa-sync fa-spin"></i> Syncing
+                    <h1 class="text-xl font-bold flex items-center"><i class="fas fa-user-graduate mr-2"></i>EST1 Adv March</h1>
+                    <!-- SYNC INDICATOR -->
+                    <span id="syncIndicator" class="hidden bg-white/20 px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1">
+                        <i class="fas fa-sync-alt sync-spinner text-[10px]"></i> Syncing...
                     </span>
                 </div>
-
-                <!-- Desktop Actions -->
-                <div class="flex items-center gap-2">
-                    <button onclick="requestNotificationPermission()" id="notifyBtn" class="p-2 text-slate-400 hover:text-primary-600 transition rounded-full hover:bg-slate-50 relative">
+                
+                <div class="flex gap-2 items-center">
+                    <button onclick="requestNotificationPermission()" id="notifyBtn" class="bg-white/20 text-white px-3 py-2 rounded-full font-bold text-sm hover:bg-white/30 transition backdrop-blur-sm" title="Enable Notifications">
                         <i class="fas fa-bell"></i>
                     </button>
-                    <button onclick="fetchStudents(true)" id="refreshBtn" class="p-2 text-slate-400 hover:text-primary-600 transition rounded-full hover:bg-slate-50">
+                    <!-- Refresh Button -->
+                    <button onclick="fetchStudents(true)" id="refreshBtn" class="bg-white/20 text-white px-3 py-2 rounded-full font-bold text-sm hover:bg-white/30 transition backdrop-blur-sm" title="Refresh">
                         <i class="fas fa-sync-alt"></i>
                     </button>
-                    <div class="h-6 w-px bg-slate-200 mx-1 hidden sm:block"></div>
-                    <button onclick="openAddModal()" class="hidden sm:flex bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-md shadow-primary-500/30 transition items-center gap-2">
-                        <i class="fas fa-plus"></i> New Student
+                    <!-- Add button only shows on Active tab -->
+                    <button id="addNewBtn" onclick="openAddModal()" class="bg-white text-[var(--primary-color)] px-4 py-2 rounded-full font-bold text-sm hover:bg-gray-100 transition shadow-sm">
+                        + Add New
                     </button>
+                    
+                    <!-- Navbar placeholder -->
+                    <div id="main-menu-container"></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- GLOBAL SEARCH BAR -->
+        <div class="bg-[var(--primary-color)] pb-3 px-4">
+            <div class="container mx-auto">
+                <div class="relative w-full">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-[var(--primary-color)] bg-transparent z-10 pointer-events-none">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" id="searchInput" placeholder="Search across all status (Name, Email, Phone)..." class="w-full pl-10 py-2 rounded-lg border-none focus:ring-2 focus:ring-white/50 bg-white text-gray-800 placeholder-gray-400 shadow-inner">
                 </div>
             </div>
         </div>
-        
-        <!-- Search & Filter Bar -->
-        <div class="bg-white border-b border-slate-100 py-3 px-4 sm:px-6 lg:px-8">
-            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row gap-3 items-center justify-between">
-                <!-- Search -->
-                <div class="relative w-full sm:max-w-md">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fas fa-search text-slate-400"></i>
-                    </div>
-                    <input type="text" id="searchInput" class="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition shadow-sm" placeholder="Search students by name, phone...">
-                </div>
 
-                <!-- View Toggle -->
-                <div class="flex gap-2 w-full sm:w-auto">
-                    <div class="bg-slate-100 p-1 rounded-lg flex w-full sm:w-auto">
-                        <button onclick="switchTab('active')" id="tab-active" class="flex-1 sm:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-all text-slate-600 hover:text-slate-900 active-tab">
-                            Active <span id="count-active" class="ml-1 text-xs bg-slate-200 px-1.5 py-0.5 rounded-full text-slate-600">0</span>
-                        </button>
-                        <button onclick="switchTab('pending')" id="tab-pending" class="flex-1 sm:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-all text-slate-600 hover:text-slate-900">
-                            Pending <span id="count-pending" class="ml-1 text-xs bg-orange-100 px-1.5 py-0.5 rounded-full text-orange-600">0</span>
-                        </button>
-                        <button onclick="switchTab('removed')" id="tab-removed" class="flex-1 sm:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-all text-slate-600 hover:text-slate-900">
-                            Removed
-                        </button>
-                    </div>
-                    <button onclick="toggleViewMode()" class="bg-white border border-slate-200 text-slate-500 hover:text-primary-600 px-3 py-2 rounded-lg shadow-sm transition hidden sm:block">
-                        <i class="fas fa-list" id="viewIcon"></i>
-                    </button>
-                </div>
+        <!-- TABS (Status Bar) -->
+        <div class="bg-white text-gray-500 shadow-sm border-t border-gray-100">
+            <div class="container mx-auto px-4 flex">
+                <button onclick="switchTab('active')" id="tab-active" class="tab-active tab-btn flex-1 py-3 font-semibold text-sm flex justify-center items-center gap-2 active">
+                    <i class="fas fa-users"></i> Active <span id="count-active" class="bg-gray-100 text-gray-600 px-2 rounded-full text-xs">0</span>
+                </button>
+                <button onclick="switchTab('pending')" id="tab-pending" class="tab-btn flex-1 py-3 font-semibold text-sm flex justify-center items-center gap-2">
+                    <i class="fas fa-clock"></i> Pending <span id="count-pending" class="bg-orange-100 text-orange-600 px-2 rounded-full text-xs">0</span>
+                </button>
+                <button onclick="switchTab('removed')" id="tab-removed" class="tab-btn flex-1 py-3 font-semibold text-sm flex justify-center items-center gap-2">
+                    <i class="fas fa-archive"></i> Removed <span id="count-removed" class="bg-red-100 text-red-600 px-2 rounded-full text-xs">0</span>
+                </button>
             </div>
         </div>
-    </nav>
+    </div>
 
-    <!-- === MAIN CONTENT === -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 safe-bottom">
+    <div class="container mx-auto p-4 max-w-7xl">
         
-        <!-- Skeleton Loader (Visible initially) -->
-        <div id="skeletonLoader" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Repeats via JS -->
+        <!-- ACTIVE VIEW CONTROLS (Only visible in Active Tab) -->
+        <div id="activeControls" class="flex justify-end mb-4">
+            <!-- View Toggle -->
+            <button onclick="toggleViewMode()" id="viewToggleBtn" class="bg-white text-gray-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-50 transition shadow-sm border border-gray-200">
+                <i class="fas fa-th-large mr-1"></i> Change View
+            </button>
         </div>
 
-        <!-- Content Grids -->
-        <div id="activeGrid" class="hidden grid-container gap-6"></div>
-        <div id="pendingGrid" class="hidden grid-container gap-6"></div>
-        <div id="removedGrid" class="hidden grid-container gap-6"></div>
+        <!-- GRIDS -->
+        <!-- 1. Active Students Grid -->
+        <div id="activeGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+        <!-- 2. Pending Students Grid -->
+        <div id="pendingGrid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+        <!-- 3. Removed Students Grid -->
+        <div id="removedGrid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
 
         <!-- Empty State -->
-        <div id="emptyState" class="hidden flex flex-col items-center justify-center py-12 text-center">
-            <div class="bg-slate-100 p-6 rounded-full mb-4">
-                <i class="fas fa-user-graduate text-4xl text-slate-300"></i>
-            </div>
-            <h3 class="text-lg font-medium text-slate-900">No students found</h3>
-            <p class="text-slate-500 max-w-sm mt-1">We couldn't find any students matching your current filters or search.</p>
+        <div id="emptyState" class="hidden text-center py-12">
+            <div class="text-gray-300 text-6xl mb-4"><i class="fas fa-folder-open"></i></div>
+            <p class="text-gray-500 text-lg">No students found matching your criteria.</p>
         </div>
-    </main>
+    </div>
 
-    <!-- === MOBILE FAB (Floating Action Button) === -->
-    <button onclick="openAddModal()" id="mobileFab" class="fixed bottom-6 right-6 w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg shadow-primary-600/40 flex items-center justify-center text-xl z-20 sm:hidden hover:scale-105 transition active:scale-95">
-        <i class="fas fa-plus"></i>
-    </button>
-
-    <!-- === MODALS === -->
-    
     <!-- Edit/Add Modal -->
-    <div id="addModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
-        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeAddModal()"></div>
-        <div class="flex min-h-full items-center justify-center p-4">
-            <div class="relative transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all sm:w-full sm:max-w-lg w-full">
-                <div class="bg-primary-600 px-6 py-4 flex justify-between items-center">
-                    <h3 class="text-lg font-bold text-white" id="modalTitle">Edit Student</h3>
-                    <button onclick="closeAddModal()" class="text-primary-100 hover:text-white transition"><i class="fas fa-times"></i></button>
+    <div id="addModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-[var(--card-bg)] rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div class="bg-[var(--primary-color)] p-4 flex justify-between items-center text-white">
+                <h3 id="modalTitle" class="font-bold">Edit Student</h3>
+                <button onclick="document.getElementById('addModal').classList.add('hidden')" class="hover:text-gray-200"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="addForm" class="p-4 space-y-3">
+                <input type="hidden" id="studentId">
+                <input type="text" id="newName" placeholder="Full Name" required class="w-full border border-gray-200 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]">
+                <input type="email" id="newEmail" placeholder="Email" class="w-full border border-gray-200 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]">
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="tel" id="newStudentPhone" placeholder="Student Phone" class="w-full border border-gray-200 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]">
+                    <input type="tel" id="newParentPhone" placeholder="Parent Phone" class="w-full border border-gray-200 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="number" id="newPaid" placeholder="Paid ($)" class="w-full border border-gray-200 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]">
+                    <input type="number" id="newRemaining" placeholder="Remaining ($)" class="w-full border border-gray-200 p-2 rounded focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]">
                 </div>
                 
-                <form id="addForm" class="px-6 py-6 space-y-4">
-                    <input type="hidden" id="studentId">
-                    
-                    <!-- Form Groups -->
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Personal Info</label>
-                        <input type="text" id="newName" placeholder="Full Name" required class="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:bg-white outline-none transition">
-                    </div>
-                    
-                    <input type="email" id="newEmail" placeholder="Email Address" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:bg-white outline-none transition">
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Contact</label>
-                            <input type="tel" id="newStudentPhone" placeholder="Student Phone" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:bg-white outline-none transition">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">&nbsp;</label>
-                            <input type="tel" id="newParentPhone" placeholder="Parent Phone" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:bg-white outline-none transition">
-                        </div>
-                    </div>
-
-                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Financials</label>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="relative">
-                                <span class="absolute left-3 top-2.5 text-slate-400">$</span>
-                                <input type="number" id="newPaid" placeholder="Paid" class="w-full pl-7 bg-white border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 outline-none transition font-medium text-green-700">
-                            </div>
-                            <div class="relative">
-                                <span class="absolute left-3 top-2.5 text-slate-400">$</span>
-                                <input type="number" id="newRemaining" placeholder="Remaining" class="w-full pl-7 bg-white border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-red-500 outline-none transition font-medium text-red-600">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-3 pt-4 border-t border-slate-100">
-                        <button type="button" id="deleteBtn" onclick="deleteStudentAction(this)" class="px-4 py-2.5 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg font-semibold transition text-sm">Delete</button>
-                        <button type="button" id="removeBtn" onclick="removeStudentAction(this)" class="px-4 py-2.5 text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-lg font-semibold transition text-sm">Archive</button>
-                        <div class="flex-1"></div>
-                        <button type="button" onclick="closeAddModal()" class="px-4 py-2.5 text-slate-600 hover:text-slate-800 font-semibold transition text-sm">Cancel</button>
-                        <button type="submit" id="submitBtn" class="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-bold shadow-lg shadow-primary-500/30 transition text-sm flex items-center gap-2">
-                            <span>Save Changes</span>
-                        </button>
-                    </div>
-                </form>
-            </div>
+                <div class="flex gap-2 mt-4 pt-2 border-t border-gray-100">
+                    <button type="button" id="deleteBtn" onclick="deleteStudentAction(this)" class="px-4 bg-red-50 text-red-600 border border-red-100 py-2 rounded hover:bg-red-100 font-bold shadow-sm">Delete</button>
+                    <button type="button" id="removeBtn" onclick="removeStudentAction(this)" class="px-4 bg-orange-50 text-orange-600 border border-orange-100 py-2 rounded hover:bg-orange-100 font-bold shadow-sm">Remove</button>
+                    <button type="submit" id="submitBtn" class="flex-1 bg-[var(--primary-color)] text-white py-2 rounded font-bold hover:bg-[var(--primary-hover)] shadow-md">Update</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <!-- Image Modal -->
-    <div id="imageModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
-        <div class="absolute inset-0 bg-black/90 backdrop-blur-sm" onclick="closeImageModal()"></div>
-        <div class="relative z-10 max-w-md w-full p-4 transform scale-95 transition-transform duration-300">
-            <button onclick="closeImageModal()" class="absolute -top-10 right-0 text-white text-2xl hover:text-gray-300"><i class="fas fa-times"></i></button>
-            <img id="modalImage" src="" class="w-full h-auto rounded-lg shadow-2xl border-4 border-white">
-            <p class="text-center text-white/70 mt-2 font-mono text-sm" id="modalStudentId"></p>
+    <div id="imageModal" class="modal opacity-0 pointer-events-none fixed inset-0 flex items-center justify-center z-50">
+        <div class="modal-overlay absolute inset-0 bg-gray-900 opacity-50" onclick="closeModal()"></div>
+        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-xl shadow-2xl z-50 overflow-hidden transform scale-95 transition-transform duration-300">
+            <div class="relative aspect-square bg-gray-100 flex items-center justify-center">
+                <button onclick="closeModal()" class="absolute top-2 right-2 z-10 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70"><i class="fas fa-times"></i></button>
+                <img id="modalImage" src="" class="object-cover w-full h-full">
+            </div>
+            <div class="p-4 bg-white text-center">
+                <p class="text-sm text-gray-500 font-bold" id="modalStudentId">--</p>
+            </div>
         </div>
     </div>
 
-    <!-- Toast Container -->
-    <div id="toast-container" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[70] flex flex-col gap-2 w-max max-w-sm pointer-events-none"></div>
+    <script src="navbar.js"></script>
 
-    <!-- === LOGIC === -->
     <script>
-        // ================= STYLE HELPER =================
-        // Dynamic classes based on state
-        const STYLES = {
-            activeTab: 'bg-white text-primary-700 shadow-sm ring-1 ring-slate-200',
-            inactiveTab: 'text-slate-500 hover:text-slate-700 hover:bg-slate-50',
-            grid: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
-            list: 'flex flex-col'
-        };
-
         // ================= CONFIGURATION =================
         const BASE_WEBHOOK = 'https://api.mark-attendance.com/webhook/EST1-Adv-March-';
+        
         const URLS = {
             GET:     BASE_WEBHOOK + 'get',
             UPDATE:  BASE_WEBHOOK + 'update',
@@ -271,9 +246,9 @@
             RESTORE: BASE_WEBHOOK + 'restore'
         };
 
-        const DEFAULT_IMAGE = 'https://ui-avatars.com/api/?background=0D9488&color=fff&name=';
-        const CACHE_KEY = 'est1_adv_march_data_v2';
-        const VIEW_MODE_KEY = 'est1_view_mode_v2';
+        const DEFAULT_IMAGE = 'https://drive.google.com/file/d/1XHdWjv1CwvYno0nqSH9LaGdtVomp5dKL/view?usp=drivesdk';
+        const CACHE_KEY = 'est1_adv_march_data';
+        const VIEW_MODE_KEY = 'est1_view_mode';
 
         // ================= STATE =================
         let allStudents = [];
@@ -297,8 +272,6 @@
 
         // ================= INIT =================
         document.addEventListener('DOMContentLoaded', () => {
-            renderSkeleton(); // Show immediately
-
             if(window.OneSignalDeferred) {
                 window.OneSignalDeferred.push(async function(OneSignal) {
                     const permission = await OneSignal.Notifications.permission;
@@ -306,35 +279,56 @@
                 });
             }
 
-            // Load Cache
+            // 1. Load Cache & Render IMMEDIATELY
             const cached = localStorage.getItem(CACHE_KEY);
             if(cached) {
                 try {
                     allStudents = JSON.parse(cached);
-                    setTimeout(processAndRender, 100); // Small delay to let shell render
-                } catch(e) {}
+                    processAndRender();
+                } catch(e) { console.error("Cache parse error"); }
             }
 
+            // Fix: Actually call the function we defined to update the button icon/text
             updateViewToggleIcon();
             
-            // Initial Fetch
+            // 2. Start Background Sync (silent refresh) after 500ms to ensure browser is ready
             setTimeout(() => fetchStudents(false), 500);
+        });
+
+        // RE-SYNC ON TAB FOCUS (For mobile "opening after closing" behavior)
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === 'visible') {
+                console.log("App foregrounded: Syncing...");
+                fetchStudents(false);
+            }
         });
 
         // ================= FETCHING =================
         async function fetchStudents(force = false) {
-            const refreshBtn = document.getElementById('refreshBtn');
-            const icon = refreshBtn.querySelector('i');
-            
-            if(force) {
-                icon.classList.add('fa-spin');
-                syncIndicator.classList.remove('hidden');
+            // Spinning Icon & Indicator
+            const refreshIcon = document.querySelector('#refreshBtn i');
+            if(refreshIcon) refreshIcon.classList.add('fa-spin');
+            syncIndicator.classList.remove('hidden');
+
+            console.log("Starting Sync..."); // Debug Log
+
+            // Only show blocking loader if we have NO data at all
+            if(allStudents.length === 0) {
+                grids[currentTab].innerHTML = '<div class="col-span-full text-center text-gray-400 py-10"><i class="fas fa-spinner fa-spin text-2xl"></i> Loading...</div>';
             }
 
             try {
-                const res = await fetch(URLS.GET);
-                if(!res.ok) throw new Error('Network error');
+                // IMPORTANT: Removed cache-busting params (?t=) as they caused 404s/Route Misses on Strict N8N servers
+                const url = URLS.GET;
+                
+                // Using simple GET request to avoid CORS complexity
+                const res = await fetch(url);
+
+                if(!res.ok) throw new Error(`Server returned ${res.status}`);
                 const data = await res.json();
+                
+                console.log("Data Received", data); // Debug Log
+
                 let rawList = Array.isArray(data) ? data : (data.data || data.body || []);
                 
                 allStudents = rawList.map((item, idx) => ({
@@ -348,247 +342,292 @@
                     status: (item.Status || "Active").toLowerCase(), 
                     notes: item.Notes || "",
                     ref: item.Reference || item.Ref || "N/A", 
-                    image: item.Image, // Will fallback in render
-                    joinedDate: item.date || item.Date
+                    image: item.Image || DEFAULT_IMAGE,
+                    joinedDate: item.date || item.Date // Capture date for sending back later
                 }));
 
                 localStorage.setItem(CACHE_KEY, JSON.stringify(allStudents));
                 processAndRender();
-                if(force) showToast("List updated successfully", "success");
+                
+                // Only show toast on manual refresh
+                if(force) showToast("Data refreshed", "success");
 
             } catch(e) {
-                console.error(e);
-                if(force) showToast("Could not sync data", "error");
-            } finally {
-                if(force) {
-                    setTimeout(() => {
-                        icon.classList.remove('fa-spin');
-                        syncIndicator.classList.add('hidden');
-                    }, 500);
+                console.error("Fetch failed:", e);
+                if(force) showToast(`Sync Failed: ${e.message}`, "error");
+                
+                if(allStudents.length === 0) {
+                    grids[currentTab].innerHTML = `<div class="col-span-full text-center text-red-400">Failed to load. <button onclick="fetchStudents(true)" class="underline">Retry</button></div>`;
                 }
-                // Hide Skeleton
-                document.getElementById('skeletonLoader').classList.add('hidden');
+            } finally {
+                if(refreshIcon) refreshIcon.classList.remove('fa-spin');
+                syncIndicator.classList.add('hidden');
             }
         }
 
         // ================= RENDERING =================
         function processAndRender() {
-            // Filter
+            // 1. FILTER GLOBAL LIST FIRST (Global Search)
             const term = searchInput.value.toLowerCase();
-            const filtered = allStudents.filter(s => 
+            const filteredAll = allStudents.filter(s => 
                 !term || 
                 s.name.toLowerCase().includes(term) || 
                 s.email.toLowerCase().includes(term) ||
                 s.phone.includes(term)
             );
 
-            // Split
-            const lists = {
-                active: filtered.filter(s => s.status === 'active'),
-                pending: filtered.filter(s => s.status === 'pending'),
-                removed: filtered.filter(s => s.status === 'removed' || s.status === 'denied')
-            };
+            // 2. Separate Lists based on status
+            const activeList = filteredAll.filter(s => s.status === 'active');
+            const pendingList = filteredAll.filter(s => s.status === 'pending');
+            const removedList = filteredAll.filter(s => s.status === 'removed' || s.status === 'denied'); 
 
-            // Update Counts
-            counts.active.innerText = lists.active.length;
-            counts.pending.innerText = lists.pending.length;
-            counts.removed.innerText = lists.removed.length;
+            // 3. Update Counts
+            counts.active.innerText = activeList.length;
+            counts.pending.innerText = pendingList.length;
+            counts.removed.innerText = removedList.length;
 
-            // Manage Grids
-            Object.keys(grids).forEach(key => grids[key].classList.add('hidden'));
-            const targetGrid = grids[currentTab];
-            const targetList = lists[currentTab];
+            // 4. Determine Target List based on Tab
+            let targetList = [];
+            let targetGrid = grids[currentTab];
             
+            // Hide all grids, show current
+            Object.values(grids).forEach(g => g.classList.add('hidden'));
             targetGrid.classList.remove('hidden');
-            
-            // Grid vs List Class
-            targetGrid.className = viewMode === 'grid' 
-                ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5' 
-                : 'flex flex-col gap-3';
 
-            if(targetList.length === 0) {
-                emptyState.classList.remove('hidden');
-            } else {
-                emptyState.classList.add('hidden');
-                
-                if(currentTab === 'active') renderActive(targetList, targetGrid);
-                else if(currentTab === 'pending') renderPending(targetList, targetGrid);
-                else renderRemoved(targetList, targetGrid);
+            if(currentTab === 'active') {
+                document.getElementById('activeControls').classList.remove('hidden');
+                document.getElementById('addNewBtn').classList.remove('hidden');
+                targetList = activeList;
+            } 
+            else if(currentTab === 'pending') {
+                document.getElementById('activeControls').classList.add('hidden');
+                document.getElementById('addNewBtn').classList.add('hidden');
+                targetList = pendingList;
+            } 
+            else {
+                document.getElementById('activeControls').classList.add('hidden');
+                document.getElementById('addNewBtn').classList.add('hidden');
+                targetList = removedList;
             }
+
+            // 5. Render
+            if(currentTab === 'active') renderActiveGrid(targetList, targetGrid);
+            else if(currentTab === 'pending') renderPendingGrid(targetList, targetGrid);
+            else renderRemovedGrid(targetList, targetGrid);
+
+            // Empty State
+            if(targetList.length === 0) emptyState.classList.remove('hidden');
+            else emptyState.classList.add('hidden');
         }
 
-        function renderActive(list, container) {
+        // --- RENDER: ACTIVE (CLASSIC GRID/LIST) ---
+        function renderActiveGrid(list, container) {
+            container.className = viewMode === 'list' 
+                ? 'grid grid-cols-1 gap-3' 
+                : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
+
             container.innerHTML = list.map((s, idx) => {
-                const img = getImage(s);
-                const isDebt = s.remaining > 0;
-                
-                // --- GRID VIEW ---
-                if(viewMode === 'grid') return `
-                <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-100 card-hover group relative overflow-hidden">
-                    ${isDebt ? `<div class="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-bl-lg"></div>` : ''}
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="flex items-center gap-3">
-                            <div class="relative cursor-pointer" onclick="openImageModal('${s.id}', '${img}')">
-                                <img src="${img}" class="w-12 h-12 rounded-full object-cover border border-slate-100 bg-slate-50">
+                const safeImg = (typeof s.image === 'string' ? s.image : (s.image[0]?.url || DEFAULT_IMAGE));
+                const isPaidOff = s.remaining <= 0;
+                const statusColor = isPaidOff ? 'bg-[var(--primary-color)] text-white' : 'bg-[var(--error-red)]/10 text-[var(--error-red)]';
+                const statusText = isPaidOff ? 'Fully Paid' : 'Payment Due';
+                const borderColor = isPaidOff ? 'border-[var(--primary-color)]' : 'border-[var(--error-red)]';
+                const remainingColor = s.remaining > 0 ? 'text-[var(--error-red)]' : 'text-[var(--primary-color)]';
+                let dateDisplay = s.joinedDate ? `<p class="text-xs text-gray-400 mt-1"><i class="far fa-calendar-alt mr-1"></i> ${new Date(s.joinedDate).toLocaleDateString()}</p>` : '';
+
+                if(viewMode === 'list') return `
+                    <div class="bg-[var(--card-bg)] rounded-xl card-shadow border-l-4 ${borderColor} p-3 flex flex-row items-center justify-between gap-4">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-bold text-base text-[var(--text-color)] truncate">${s.name}</h3>
+                                <button onclick="openModal('${s.id}', '${safeImg}')" class="text-gray-400 hover:text-[var(--primary-color)] transition-colors"><i class="fas fa-image"></i></button>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${statusColor} whitespace-nowrap">${statusText}</span>
                             </div>
-                            <div>
-                                <h3 class="font-bold text-slate-800 text-lg leading-tight truncate w-40">${s.name}</h3>
-                                <p class="text-xs text-slate-400 font-mono">${s.id}</p>
+                            <div class="flex items-center text-xs text-gray-500 gap-3 mt-1">
+                                <span class="truncate max-w-[150px]"><i class="fas fa-envelope mr-1"></i> ${s.email}</span>
+                                ${dateDisplay}
                             </div>
                         </div>
-                        <button onclick="openEditModal('${s.id}')" class="text-slate-300 hover:text-primary-600 transition"><i class="fas fa-pen"></i></button>
-                    </div>
-
-                    <!-- Stats -->
-                    <div class="grid grid-cols-2 gap-2 mb-4">
-                        <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
-                            <p class="text-[10px] uppercase text-slate-400 font-bold">Paid</p>
-                            <p class="text-green-600 font-bold">$${s.paid}</p>
+                        <div class="flex items-center gap-4">
+                            <div class="text-right hidden sm:block">
+                                <div class="text-xs text-gray-400">Remaining</div>
+                                <div class="font-bold ${remainingColor}">$${s.remaining}</div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="openEditModal('${s.id}')" class="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition"><i class="fas fa-edit"></i></button>
+                            </div>
                         </div>
-                        <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
-                            <p class="text-[10px] uppercase text-slate-400 font-bold">Due</p>
-                            <p class="${isDebt ? 'text-red-500' : 'text-slate-400'} font-bold">$${s.remaining}</p>
-                        </div>
-                    </div>
+                    </div>`;
 
-                    <!-- Note Input -->
-                    <div class="relative mb-4">
-                        <input type="text" value="${s.notes}" id="note-${idx}" 
-                            class="w-full text-sm bg-slate-50 border-none rounded-md py-2 px-3 focus:bg-white focus:ring-1 focus:ring-primary-500 transition placeholder-slate-400" 
-                            placeholder="Add a note..."
-                            onchange="saveNote('${s.id}', ${idx}, this)">
-                        <i class="fas fa-pencil-alt absolute right-3 top-3 text-xs text-slate-300 pointer-events-none"></i>
-                    </div>
-
-                    <!-- Quick Actions -->
-                    <div class="flex gap-2">
-                         <a href="https://wa.me/${s.phone.replace(/^0/, '20')}" target="_blank" class="flex-1 bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white py-2 rounded-lg text-center text-sm font-semibold transition flex items-center justify-center gap-2">
-                            <i class="fab fa-whatsapp"></i> Student
-                        </a>
-                        <a href="https://wa.me/${s.parentPhone.replace(/^0/, '20')}" target="_blank" class="px-3 bg-slate-100 text-slate-600 hover:bg-slate-200 py-2 rounded-lg text-sm transition">
-                            <i class="fas fa-user-friends"></i>
-                        </a>
-                    </div>
-                </div>`;
-
-                // --- LIST VIEW ---
                 return `
-                <div class="bg-white rounded-lg p-3 shadow-sm border border-slate-100 flex flex-col sm:flex-row items-center gap-4">
-                     <img src="${img}" class="w-10 h-10 rounded-full object-cover bg-slate-50 hidden sm:block">
-                     <div class="flex-1 w-full sm:w-auto text-left">
-                        <div class="flex justify-between items-center sm:block">
-                            <h3 class="font-bold text-slate-800">${s.name}</h3>
-                            <span class="sm:hidden text-xs font-bold ${isDebt ? 'text-red-500' : 'text-green-600'}">$${s.remaining} due</span>
+                    <div class="bg-[var(--card-bg)] rounded-xl card-shadow border-l-4 ${borderColor} p-5 flex flex-col">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="min-w-0 pr-2">
+                                <div class="flex items-center gap-2 mb-0.5">
+                                    <h3 class="font-bold text-lg text-[var(--text-color)] break-words leading-tight">${s.name}</h3>
+                                    <button onclick="openModal('${s.id}', '${safeImg}')" class="text-[var(--primary-color)] hover:text-[var(--primary-hover)] bg-gray-100 hover:bg-gray-200 w-7 h-7 flex items-center justify-center rounded-full transition-colors"><i class="fas fa-image text-xs"></i></button>
+                                </div>
+                                <p class="text-sm text-gray-500 truncate"><i class="fas fa-envelope mr-1"></i> ${s.email}</p>
+                                ${dateDisplay}
+                            </div>
+                            <span class="px-2 py-1 rounded text-xs font-bold ${statusColor} whitespace-nowrap flex-shrink-0">${statusText}</span>
                         </div>
-                        <p class="text-xs text-slate-500 truncate">${s.email}</p>
-                     </div>
-                     <div class="hidden sm:block text-right px-4 border-l border-slate-100">
-                        <p class="text-xs text-slate-400 uppercase">Paid</p>
-                        <p class="font-bold text-slate-700">$${s.paid}</p>
-                     </div>
-                     <div class="hidden sm:block text-right px-4 border-l border-slate-100">
-                        <p class="text-xs text-slate-400 uppercase">Due</p>
-                        <p class="font-bold ${isDebt ? 'text-red-500' : 'text-slate-400'}">$${s.remaining}</p>
-                     </div>
-                     <div class="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-                        <a href="https://wa.me/${s.phone}" class="flex-1 sm:flex-none text-center bg-green-50 text-green-600 px-3 py-2 rounded-md hover:bg-green-100 transition"><i class="fab fa-whatsapp"></i></a>
-                        <button onclick="openEditModal('${s.id}')" class="flex-1 sm:flex-none bg-slate-50 text-slate-600 px-3 py-2 rounded-md hover:bg-slate-100 transition"><i class="fas fa-pen"></i></button>
-                     </div>
+                        <div class="mb-4">
+                            <p class="text-xs text-gray-400 uppercase mb-1">Notes</p>
+                            <div class="relative group">
+                                <input type="text" id="note-input-${idx}" value="${s.notes}" class="w-full text-sm py-2 px-3 border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none transition-all pr-12" placeholder="Add note...">
+                                <button onclick="saveNote('${s.id}', ${idx}, 'note-input-${idx}', this)" class="absolute top-1/2 -translate-y-1/2 right-2 text-xs bg-white text-[var(--primary-color)] border border-gray-200 hover:bg-gray-50 px-2 py-1 rounded shadow-sm opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity">Save</button>
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-100 pt-3 flex justify-between items-center">
+                            <div class="text-sm"><span class="text-gray-400">Paid:</span> <span class="font-bold text-[var(--text-color)]">$${s.paid}</span></div>
+                            <div class="text-sm"><span class="text-gray-400">Remaining:</span> <span class="font-bold ${remainingColor}">$${s.remaining}</span></div>
+                        </div>
+                        <div class="mt-3 grid grid-cols-2 gap-2">
+                             <a href="https://wa.me/${s.phone.replace(/^0/, '20')}" target="_blank" class="flex items-center justify-center bg-[#25D366]/10 text-[#25D366] py-2 rounded text-sm hover:bg-[#25D366]/20 transition border border-[#25D366]/20"><i class="fab fa-whatsapp text-lg mr-2"></i> Student</a>
+                             <a href="https://wa.me/${s.parentPhone.replace(/^0/, '20')}" target="_blank" class="flex items-center justify-center bg-[#25D366]/10 text-[#25D366] py-2 rounded text-sm hover:bg-[#25D366]/20 transition border border-[#25D366]/20"><i class="fab fa-whatsapp text-lg mr-2"></i> Parent</a>
+                             <button onclick="openEditModal('${s.id}')" class="flex items-center justify-center bg-gray-50 text-gray-600 py-2 rounded text-sm hover:bg-gray-100 transition border border-gray-200"><i class="fas fa-edit mr-2"></i> Edit</button>
+                             <a href="https://ermathexpert.online/wp-admin/users.php?s=${encodeURIComponent(s.email)}" target="_blank" class="flex items-center justify-center bg-[var(--primary-color)]/10 text-[var(--primary-color)] py-2 rounded text-sm hover:bg-[var(--primary-color)]/20 transition border border-[var(--primary-color)]/20"><i class="fas fa-user-circle mr-2"></i> Account</a>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        // --- RENDER: PENDING (With Name+Image & Edit) ---
+        function renderPendingGrid(list, container) {
+            container.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
+            container.innerHTML = list.map(s => {
+                const safeImg = (typeof s.image === 'string' ? s.image : (s.image[0]?.url || DEFAULT_IMAGE));
+                return `
+                <div class="bg-white rounded-xl p-5 card-shadow border-l-4 border-orange-400 relative overflow-hidden">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-bold text-lg text-gray-800 leading-tight">${s.name}</h3>
+                            <button onclick="openModal('${s.id}', '${safeImg}')" class="text-[var(--primary-color)] hover:text-[var(--primary-hover)] bg-gray-100 hover:bg-gray-200 w-7 h-7 flex items-center justify-center rounded-full transition-colors"><i class="fas fa-image text-xs"></i></button>
+                        </div>
+                        <button onclick="openEditModal('${s.id}')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-edit"></i></button>
+                    </div>
+                    <div class="text-sm text-gray-600 space-y-1 mb-4 pl-1">
+                        <p><span class="text-gray-400">Paid:</span> <span class="font-mono font-bold text-green-600">$${s.paid}</span></p>
+                        <p><span class="text-gray-400">Ref #:</span> <span class="font-mono bg-gray-100 px-1 rounded">${s.ref}</span></p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="performAction('approve', '${s.id}', this)" class="py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-bold shadow-sm transition">Approve</button>
+                        <button onclick="performAction('deny', '${s.id}', this)" class="py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-sm font-bold transition">Deny</button>
+                    </div>
                 </div>`;
             }).join('');
         }
 
-        function renderPending(list, container) {
-            container.innerHTML = list.map(s => `
-                <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-orange-200">
-                    <div class="bg-orange-50 p-4 flex justify-between items-center">
-                        <h3 class="font-bold text-orange-900">${s.name}</h3>
-                        <span class="bg-white text-orange-600 text-xs px-2 py-1 rounded font-mono border border-orange-100">${s.ref}</span>
-                    </div>
-                    <div class="p-5">
-                        <div class="flex justify-between mb-4 text-sm">
-                            <span class="text-slate-500">Amount Paid:</span>
-                            <span class="font-bold text-slate-800">$${s.paid}</span>
+        // --- RENDER: REMOVED (With Name+Image & Edit) ---
+        function renderRemovedGrid(list, container) {
+            container.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
+            container.innerHTML = list.map((s, idx) => {
+                const safeImg = (typeof s.image === 'string' ? s.image : (s.image[0]?.url || DEFAULT_IMAGE));
+                return `
+                <div class="bg-gray-50 rounded-xl p-5 border border-gray-200 opacity-90 hover:opacity-100 transition">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-bold text-gray-700 line-through decoration-gray-400">${s.name}</h3>
+                            <button onclick="openModal('${s.id}', '${safeImg}')" class="text-[var(--primary-color)] hover:text-[var(--primary-hover)] bg-gray-100 hover:bg-gray-200 w-7 h-7 flex items-center justify-center rounded-full transition-colors"><i class="fas fa-image text-xs"></i></button>
                         </div>
-                        <div class="grid grid-cols-2 gap-3">
-                             <button onclick="performAction('approve', '${s.id}', this)" class="bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm font-bold shadow-sm transition">Approve</button>
-                             <button onclick="performAction('deny', '${s.id}', this)" class="bg-white border border-red-200 text-red-600 hover:bg-red-50 py-2 rounded-lg text-sm font-bold transition">Deny</button>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs bg-gray-200 text-gray-500 px-2 py-1 rounded">Archived</span>
+                            <button onclick="openEditModal('${s.id}')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-edit"></i></button>
                         </div>
                     </div>
-                </div>
-            `).join('');
-        }
-
-        function renderRemoved(list, container) {
-            container.innerHTML = list.map(s => `
-                <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 opacity-75 hover:opacity-100 transition">
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="font-bold text-slate-600 line-through">${s.name}</h3>
-                        <button onclick="performAction('restore', '${s.id}', this)" class="text-blue-600 hover:text-blue-800 text-xs font-bold uppercase"><i class="fas fa-undo mr-1"></i> Restore</button>
+                    
+                    <div class="mb-4">
+                        <div class="flex gap-2 mt-1">
+                            <input type="text" id="note-${idx}" value="${s.notes}" class="flex-1 text-sm p-2 border rounded bg-white" placeholder="Add note...">
+                            <button onclick="saveNote('${s.id}', ${idx}, 'note-${idx}', this)" class="bg-blue-50 text-blue-600 px-3 rounded hover:bg-blue-100"><i class="fas fa-save"></i></button>
+                        </div>
                     </div>
-                    <p class="text-xs text-slate-400 mb-2">${s.email}</p>
-                    <div class="text-xs bg-slate-200 text-slate-500 px-2 py-1 rounded inline-block">Archived</div>
-                </div>
-            `).join('');
-        }
 
-        function renderSkeleton() {
-            const skel = `
-            <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-100 animate-pulse">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-12 h-12 bg-slate-200 rounded-full"></div>
-                    <div class="flex-1 space-y-2">
-                        <div class="h-4 bg-slate-200 rounded w-3/4"></div>
-                        <div class="h-3 bg-slate-200 rounded w-1/2"></div>
-                    </div>
-                </div>
-                <div class="h-16 bg-slate-100 rounded-lg mb-4"></div>
-                <div class="h-8 bg-slate-200 rounded"></div>
-            </div>`;
-            document.getElementById('skeletonLoader').innerHTML = skel.repeat(6);
+                    <button onclick="performAction('restore', '${s.id}', this)" class="w-full py-2 bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition">
+                        <i class="fas fa-undo"></i> Restore Student
+                    </button>
+                </div>`;
+            }).join('');
         }
 
         // ================= ACTIONS =================
-        async function performAction(action, id, btn) {
-            if(action === 'delete' && !confirm("Permanently delete this student?")) return;
-            
-            const originalContent = btn.innerHTML;
-            btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i>`;
-            btn.disabled = true;
+        
+        // NEW WRAPPER FUNCTIONS for Delete/Remove
+        function deleteStudentAction(btn) {
+            const id = document.getElementById('studentId').value;
+            performAction('delete', id, btn);
+        }
+
+        function removeStudentAction(btn) {
+            const id = document.getElementById('studentId').value;
+            performAction('remove', id, btn);
+        }
+
+        async function performAction(actionType, id, btnElement) {
+            let url = '';
+            let method = 'POST';
+            let confirmMsg = "";
 
             const student = allStudents.find(s => s.id == id);
-            const body = { id, Date: student ? student.joinedDate : null };
+            let body = { 
+                id: id, 
+                Date: student ? student.joinedDate : null 
+            };
+
+            switch(actionType) {
+                case 'approve': url = URLS.APPROVE; break;
+                case 'deny':    url = URLS.DENY; confirmMsg = "Deny this student? They will be moved to Removed."; break;
+                case 'restore': url = URLS.RESTORE; break;
+                case 'remove':  url = URLS.REMOVE; confirmMsg = "Archive this student?"; break;
+                case 'delete':  url = URLS.DELETE; confirmMsg = "PERMANENTLY DELETE? This cannot be undone."; break;
+            }
+
+            if(confirmMsg && !confirm(confirmMsg)) return;
+
+            const btn = btnElement;
+            const originalContent = btn ? btn.innerHTML : '';
+            if(btn) {
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                btn.disabled = true;
+            }
 
             try {
-                let url = URLS[action.toUpperCase()];
-                await fetch(url, { method: 'POST', body: JSON.stringify(body) });
-                
-                showToast(`${action} successful`, 'success');
-                // Optimistic UI update could go here, but for safety we sync
-                setTimeout(() => fetchStudents(true), 2000); 
+                await fetch(url, {
+                    method: method,
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(body)
+                });
 
-                // Close modals if open
-                closeAddModal();
+                showToast(`${actionType.toUpperCase()} Request Sent`, "success");
+                
+                if(actionType === 'remove' || actionType === 'delete') {
+                    document.getElementById('addModal').classList.add('hidden');
+                }
+
+                // WAIT 4 SECONDS before fetching new data (backend delay)
+                if(btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+                await new Promise(resolve => setTimeout(resolve, 4000));
+
+                await fetchStudents(true);
 
             } catch(e) {
-                btn.innerHTML = originalContent;
-                btn.disabled = false;
-                showToast("Action failed", "error");
+                showToast("Action Failed", "error");
+                if(btn) {
+                    btn.innerHTML = originalContent;
+                    btn.disabled = false;
+                }
             }
         }
 
-        async function saveNote(id, idx, input) {
-            const val = input.value;
-            // 1. Get the current user's name from Clerk
-            const editor = window.Clerk?.user ? (window.Clerk.user.firstName || window.Clerk.user.fullName || "Admin") : "Admin";
-            // 2. Create timestamp
-            const time = new Date().toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' });
-            // 3. Append signature to note
-            const signedNote = `${val} - [${editor} @ ${time}]`;
-
-            // Visual feedback
-            input.classList.add('bg-green-50', 'text-green-700');
-            input.value = signedNote; 
+        async function saveNote(id, idx, inputId, btnElement) {
+            const val = document.getElementById(inputId).value;
+            const student = allStudents.find(s => s.id == id);
+            const btn = btnElement;
+            const originalHTML = btn.innerHTML;
+            
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
 
             try {
                 await fetch(URLS.UPDATE, {
@@ -596,36 +635,38 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ 
                         id: id, 
-                        Notes: signedNote, // Sending signed note
-                        Date: allStudents.find(s => s.id == id)?.joinedDate 
+                        Notes: val,
+                        Date: student ? student.joinedDate : null 
                     })
                 });
-
-                // Update local model
-                allStudents.find(s => s.id == id).notes = signedNote;
                 
-                showToast(`Note signed by ${editor}`, 'success');
-                setTimeout(() => input.classList.remove('bg-green-50', 'text-green-700'), 1500);
-            } catch(e) {
-                input.value = val; // Revert
-                input.classList.add('bg-red-50', 'text-red-700');
+                allStudents.find(s => s.id == id).notes = val;
+                
+                btn.innerHTML = '<i class="fas fa-check"></i>';
+                btn.classList.add('text-green-600');
+                showToast("Note Saved", "success");
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.classList.remove('text-green-600');
+                    btn.disabled = false;
+                }, 1500);
+            } catch(e) { 
                 showToast("Failed to save note", "error");
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
             }
         }
 
-        // Form Submit
         document.getElementById('addForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
-            const original = btn.innerHTML;
-            btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> Saving...`;
+            const originalText = btn.innerText;
+            btn.innerText = "Saving...";
             btn.disabled = true;
 
             const idVal = document.getElementById('studentId').value;
-            const existing = allStudents.find(s => s.id == idVal);
-            
-            // Get Editor for main updates too (optional but good for tracking)
-            const editor = window.Clerk?.user ? (window.Clerk.user.firstName || "Admin") : "Admin";
+            const existingStudent = allStudents.find(s => s.id == idVal);
 
             const payload = {
                 id: idVal,
@@ -636,71 +677,54 @@
                 Paid: document.getElementById('newPaid').value,
                 Remaining: document.getElementById('newRemaining').value,
                 Status: 'Active',
-                Date: existing ? existing.joinedDate : new Date().toISOString(),
-                UpdatedBy: editor // Extra tracking field
+                Date: existingStudent ? existingStudent.joinedDate : new Date().toISOString()
             };
 
             try {
-                await fetch(URLS.UPDATE, { method: 'POST', body: JSON.stringify(payload) });
-                showToast("Student saved successfully", "success");
-                closeAddModal();
-                setTimeout(() => fetchStudents(true), 3000);
+                await fetch(URLS.UPDATE, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                showToast("Student Saved", "success");
+                document.getElementById('addModal').classList.add('hidden');
+                
+                await new Promise(r => setTimeout(r, 4000));
+                fetchStudents(true);
             } catch(e) {
-                showToast("Save failed", "error");
-            } finally {
-                btn.innerHTML = original;
+                showToast("Save Failed", "error");
+                btn.innerText = originalText;
                 btn.disabled = false;
             }
         });
 
-        // ================= HELPERS =================
-        function getImage(s) {
-            let url = s.image;
-            if(Array.isArray(url)) url = url[0]?.url;
-            if(!url || typeof url !== 'string') return DEFAULT_IMAGE + encodeURIComponent(s.name);
-            
-            // Google Drive Fix
-            const match = url.match(/\/d\/([-\w]+)/) || url.match(/id=([-\w]+)/);
-            if(match && match[1]) return `https://lh3.googleusercontent.com/d/${match[1]}=s200`;
-            
-            return url;
-        }
-
-        // UI Helpers
-        function switchTab(tab) {
-            currentTab = tab;
-            document.querySelectorAll('button[id^="tab-"]').forEach(b => {
-                b.className = b.id === `tab-${tab}` 
-                    ? `flex-1 sm:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-all ${STYLES.activeTab}`
-                    : `flex-1 sm:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-all ${STYLES.inactiveTab}`;
-            });
-            processAndRender();
-        }
-
+        // Toggle logic with visual update
         function toggleViewMode() {
             viewMode = viewMode === 'grid' ? 'list' : 'grid';
             localStorage.setItem(VIEW_MODE_KEY, viewMode);
-            updateViewToggleIcon();
+            updateViewToggleIcon(); // Update icon
+            processAndRender();     // Update UI
+        }
+
+        // Restored helper function to fix ReferenceError
+        function updateViewToggleIcon() {
+            const btn = document.getElementById('viewToggleBtn');
+            if(viewMode === 'grid') {
+                btn.innerHTML = '<i class="fas fa-list mr-1"></i> List View';
+            } else {
+                btn.innerHTML = '<i class="fas fa-th-large mr-1"></i> Grid View';
+            }
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'tab-active'));
+            document.getElementById(`tab-${tab}`).classList.add('active', 'tab-active');
             processAndRender();
         }
 
-        function updateViewToggleIcon() {
-            const icon = document.getElementById('viewIcon');
-            icon.className = viewMode === 'grid' ? 'fas fa-list' : 'fas fa-th-large';
-        }
-
-        // Modal Logic
-        function openAddModal() {
-            document.getElementById('addForm').reset();
-            document.getElementById('studentId').value = "";
-            document.getElementById('modalTitle').innerText = "Add New Student";
-            document.getElementById('deleteBtn').classList.add('hidden');
-            document.getElementById('removeBtn').classList.add('hidden');
-            document.getElementById('addModal').classList.remove('hidden');
-        }
-
         function openEditModal(id) {
-            const s = allStudents.find(x => x.id == id);
+            const s = allStudents.find(stu => stu.id == id);
             if(!s) return;
             document.getElementById('studentId').value = s.id;
             document.getElementById('newName').value = s.name;
@@ -710,32 +734,58 @@
             document.getElementById('newPaid').value = s.paid;
             document.getElementById('newRemaining').value = s.remaining;
             
-            document.getElementById('modalTitle').innerText = "Edit Details";
+            document.getElementById('modalTitle').innerText = "Edit Student";
             document.getElementById('deleteBtn').classList.remove('hidden');
             document.getElementById('removeBtn').classList.remove('hidden');
             document.getElementById('addModal').classList.remove('hidden');
         }
 
-        function closeAddModal() { document.getElementById('addModal').classList.add('hidden'); }
-        
-        // Image Modal
-        function openImageModal(id, url) {
-            const m = document.getElementById('imageModal');
-            document.getElementById('modalImage').src = url;
-            document.getElementById('modalStudentId').innerText = id;
-            m.classList.remove('hidden');
-            setTimeout(() => { m.classList.remove('opacity-0'); m.children[1].classList.remove('scale-95'); }, 10);
-        }
-        function closeImageModal() {
-             const m = document.getElementById('imageModal');
-             m.classList.add('opacity-0'); m.children[1].classList.add('scale-95');
-             setTimeout(() => m.classList.add('hidden'), 300);
+        function openAddModal() {
+            document.getElementById('addForm').reset();
+            document.getElementById('studentId').value = "";
+            document.getElementById('modalTitle').innerText = "Add New Student";
+            document.getElementById('deleteBtn').classList.add('hidden');
+            document.getElementById('removeBtn').classList.add('hidden');
+            document.getElementById('addModal').classList.remove('hidden');
         }
 
-        // Search Debounce
+        function openModal(id, url) {
+            document.getElementById('modalImage').src = convertDriveLink(url);
+            document.getElementById('modalStudentId').innerText = id;
+            const m = document.getElementById('imageModal');
+            m.classList.remove('opacity-0', 'pointer-events-none');
+            document.body.classList.add('modal-active');
+            setTimeout(() => { m.children[1].classList.replace('scale-95', 'scale-100'); }, 10);
+        }
+
+        function closeModal() {
+            const m = document.getElementById('imageModal');
+            m.children[1].classList.replace('scale-100', 'scale-95');
+            setTimeout(() => {
+                m.classList.add('opacity-0', 'pointer-events-none');
+                document.body.classList.remove('modal-active');
+            }, 200);
+        }
+
+        function convertDriveLink(url) {
+            if (!url) return '';
+            const match = url.match(/\/d\/([-\w]+)/) || url.match(/id=([-\w]+)/);
+            return (match && match[1]) ? `https://lh3.googleusercontent.com/d/${match[1]}` : url;
+        }
+
         searchInput.addEventListener('input', () => processAndRender());
 
-        // Notifications
+        function showToast(msg, type='info') {
+            const c = document.getElementById('toast-container');
+            const d = document.createElement('div');
+            const color = type === 'success' ? 'bg-green-600' : type === 'error' ? 'bg-red-600' : 'bg-blue-600';
+            d.className = `p-4 rounded shadow-lg text-white mb-3 toast-enter ${color} flex items-center gap-3`;
+            d.innerHTML = `<i class="fas fa-info-circle"></i> <span>${msg}</span>`;
+            c.appendChild(d);
+            requestAnimationFrame(() => { d.classList.remove('toast-enter'); d.classList.add('toast-enter-active'); });
+            setTimeout(() => d.remove(), 3000);
+        }
+
         function requestNotificationPermission() {
             window.OneSignalDeferred.push(async function(OneSignal) {
                 await OneSignal.Notifications.requestPermission();
@@ -745,43 +795,28 @@
         function updateNotifyIcon(active) {
             const btn = document.getElementById('notifyBtn');
             if(active) {
-                btn.classList.add('text-primary-600', 'bg-primary-50');
+                btn.classList.replace('bg-white/20', 'bg-[var(--primary-color)]');
                 btn.querySelector('i').classList.replace('fa-bell', 'fa-bell-slash');
             }
         }
-        
-        // Action Wrappers
-        function deleteStudentAction(btn) { performAction('delete', document.getElementById('studentId').value, btn); }
-        function removeStudentAction(btn) { performAction('remove', document.getElementById('studentId').value, btn); }
-        
-        function showToast(msg, type) {
-            const c = document.getElementById('toast-container');
-            const t = document.createElement('div');
-            const bg = type === 'success' ? 'bg-slate-800' : 'bg-red-600';
-            t.className = `${bg} text-white px-4 py-3 rounded-lg shadow-lg text-sm flex items-center gap-3 toast-animate pointer-events-auto`;
-            t.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${msg}`;
-            c.appendChild(t);
-            setTimeout(() => t.remove(), 3000);
-        }
     </script>
-    
-    <!-- Auth Check -->
-    <!--<script>
+    <script>
         const LOGIN_PAGE_URL = "https://mmoh16.github.io/Student-Manger/";
         window.addEventListener("load", async function () {
             try {
-                if (!window.Clerk) { console.error("Clerk missing"); return; }
+                if (!window.Clerk) { console.error("Clerk not loaded"); return; }
                 await Clerk.load();
                 if (Clerk.user) {
-                    document.getElementById('appBody').classList.remove('hidden');
+                    document.body.style.display = "block";
+                    if (typeof initApp === "function") initApp();
                 } else {
                     window.location.href = LOGIN_PAGE_URL;
                 }
             } catch (err) {
-                console.error("Auth Error", err);
+                console.error("Security check failed", err);
                 window.location.href = LOGIN_PAGE_URL;
             }
         });
-    </script> -->
+     </script>
 </body>
 </html>
